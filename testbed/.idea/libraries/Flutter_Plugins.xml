@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="Flutter Plugins" type="FlutterPluginsLibraryType">
+    <CLASSES>
+      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dartlang.org/url_launcher_macos-0.0.1+7" />
+      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dartlang.org/path_provider_linux-0.0.1+1" />
+      <root url="file://$PROJECT_DIR$/../plugins/file_chooser" />
+      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dartlang.org/path_provider-1.6.11" />
+      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dartlang.org/path_provider_macos-0.0.4+3" />
+      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dartlang.org/shared_preferences-0.5.7+3" />
+      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dartlang.org/url_launcher_web-0.1.1+6" />
+      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dartlang.org/url_launcher-5.4.11" />
+      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dartlang.org/shared_preferences_web-0.1.2+7" />
+      <root url="file://$PROJECT_DIR$/../plugins/menubar" />
+      <root url="file://$PROJECT_DIR$/../plugins/color_panel" />
+      <root url="file://$PROJECT_DIR$/../plugins/window_size" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
