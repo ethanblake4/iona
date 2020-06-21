@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/src/gestures/events.dart';
 import 'package:iona_flutter/model/ide/ide_theme.dart';
 import 'package:iona_flutter/model/ide/project.dart';
+import 'package:iona_flutter/model/syntax/syntax_definition.dart';
 import 'package:iona_flutter/ui/design/custom_iconbutton.dart';
 import 'package:iona_flutter/util/ot/atext_changeset.dart';
 import 'package:scoped_model/scoped_model.dart';

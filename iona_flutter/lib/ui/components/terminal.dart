@@ -35,7 +35,7 @@ class _TerminalState extends State<Terminal> {
 
   StreamSubscription<String> data;
   StreamSubscription<String> err;
-  ScrollController controller = new ScrollController();
+  ScrollController controller = ScrollController();
   int maxRow = 0;
   int frameOffsetX = 0;
   int frameOffsetY = 0;
