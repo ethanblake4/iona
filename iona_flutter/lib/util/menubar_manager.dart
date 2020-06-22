@@ -38,10 +38,13 @@ class MenuBarManager {
     return MapEntry(v, <String, List<MenuActionOrSubmenu>>{});
   }));
 
+  bool hasChanged = false;
+
   /// Singleton
   static final MenuBarManager _singleton = MenuBarManager._internal();
 
   void setItem(MenuCategory category, String group, MenuActionOrSubmenu item) {
+    hasChanged = true;
     if (!rootMenus[category].containsKey(group)) {
       rootMenus[category][group] = <MenuActionOrSubmenu>[];
     }
@@ -65,18 +68,30 @@ class MenuBarManager {
     if (!rootMenus[category].containsKey(group)) return false;
     final ind = rootMenus[category][group].firstWhere((element) => element._id == id, orElse: () => null);
     if (ind == null) return false;
-    ind
-      ..action = action ?? ind.action
-      ..enabled = enabled ?? ind.enabled
-      ..shortcut = shortcut ?? ind.shortcut
-      ..submenu = submenu ?? ind.submenu
-      ..title = title ?? ind.title;
-
-    if (!_firstPublish) {
-      _publish();
+    if (action != null && ind.action != action) {
+      ind.action = action;
+      hasChanged = true;
+    }
+    if (enabled != null && ind.enabled != enabled) {
+      ind.enabled = enabled;
+      hasChanged = true;
+    }
+    if (shortcut != null && ind.shortcut != shortcut) {
+      ind.shortcut = shortcut;
+      hasChanged = true;
+    }
+    if (submenu != null && ind.submenu != submenu) {
+      ind.submenu = submenu;
+      hasChanged = true;
+    }
+    if (title != null && ind.title != title) {
+      ind.title = title;
+      hasChanged = true;
     }
 
-    return true;
+    print('hasChanged: $hasChanged');
+
+    return hasChanged;
   }
 
   bool _firstPublish = false;
@@ -88,9 +103,11 @@ class MenuBarManager {
   }
 
   void _publish() {
-    if (!Platform.isMacOS && !Platform.isLinux) {
+    if (!hasChanged || (!Platform.isMacOS && !Platform.isLinux)) {
       return;
     }
+
+    hasChanged = false;
 
     setApplicationMenu(rootMenus
         .map((name, menu) => MapEntry<MenuCategory, Submenu>(

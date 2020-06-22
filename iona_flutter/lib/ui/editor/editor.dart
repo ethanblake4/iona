@@ -10,6 +10,7 @@ import 'package:iona_flutter/model/ide/ide_theme.dart';
 import 'package:iona_flutter/model/ide/project.dart';
 import 'package:iona_flutter/model/syntax/syntax_definition.dart';
 import 'package:iona_flutter/ui/design/custom_iconbutton.dart';
+import 'package:iona_flutter/ui/editor/util/compose.dart';
 import 'package:iona_flutter/util/ot/atext_changeset.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:yaml/yaml.dart';
@@ -41,6 +42,7 @@ class _EditorState extends State<Editor> {
   Map<String, List<Changeset>> prevChangesets = {};
   Map<String, int> undoPosition = {};
   Map<String, List<List<int>>> prevLineLengths = {};
+  Map<String, List<int>> currentChangeLineLength = {};
   var hasMovedCursor = false;
   var wasBackspacing = false;
   var didUndo = false;
@@ -82,7 +84,8 @@ class _EditorState extends State<Editor> {
           Project.of(context).updateFile(curFile, inv);
         }
       })
-      ..updateItem(MenuCategory.file, 'save', 'save', enabled: true, action: () {
+      ..updateItem(MenuCategory.edit, 'clipboard', 'paste', enabled: true, action: paste)
+      ..updateItem(MenuCategory.file, 'save', 'save', enabled: false, action: () {
         Project.of(context).saveFile(curFile);
       })
       ..publish();
@@ -111,13 +114,6 @@ class _EditorState extends State<Editor> {
           prevLineLengths[curFile] = [];
         }
 
-        MenuBarManager().setItem(
-            MenuCategory.file,
-            'save',
-            MenuActionOrSubmenu('save', 'Save', action: () {
-              Project.of(context).saveFile(curFile);
-            }, shortcut: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyS), enabled: false));
-
         if (curFile != displayedDoc) {
           var doc = openFiles[curFile].document;
           final fn = openFiles[curFile].fileName;
@@ -128,10 +124,9 @@ class _EditorState extends State<Editor> {
               break;
             }
           }
-
           print(doc.last.toString());
           lines = StandardSyntaxHighlighter(currentSyntax.name, currentSyntax)
-              .highlight(doc.map((it) => it['s'] as String).toList());
+              .highlight(doc.map((it) => it['s']).toList().cast<String>());
           displayedDoc = curFile;
         }
         if (rebuildLines) {
@@ -156,11 +151,6 @@ class _EditorState extends State<Editor> {
       }
       if (didUpdateDoc) {
         var doc = Project.of(context).openFiles[curFile].document;
-        /*lines = doc
-
-            .map((line) =>
-                EditorUiLine([EditorTextFragment('undef', 'undef', (line['s']).substring(0, line['s'].length - 1))]))
-            .toList();*/
         lines = StandardSyntaxHighlighter(currentSyntax.name, currentSyntax)
             .highlight(doc.map((it) => it['s'] as String).toList());
         didUpdateDoc = false;
@@ -182,7 +172,7 @@ class _EditorState extends State<Editor> {
                     ? IdeTheme.of(context).windowHeaderActive.col
                     : IdeTheme.of(context).windowHeader.col,
                 child: Row(
-                  children: Project.of(context).openFiles.values.map((file) {
+                  children: openFiles.values.map((file) {
                     if (file.fileLocation == curFile) find = i;
                     i++;
                     return Material(
@@ -215,7 +205,7 @@ class _EditorState extends State<Editor> {
                                 onPressed: () {
                                   Project.of(context).closeFile(file.fileLocation);
                                   if (curFile == file.fileLocation) {
-                                    curFile = Project.of(context).openFiles.values.toList()[find - 1].fileLocation;
+                                    curFile = openFiles.values.toList()[find - 1].fileLocation;
                                   }
                                 },
                               ),
@@ -226,7 +216,7 @@ class _EditorState extends State<Editor> {
                                   style: TextStyle(color: testTheme.baseStyle.color),
                                 ),
                               ),
-                              if (Project.of(context).openFiles[file.fileLocation].hasModified)
+                              if (openFiles[file.fileLocation].hasModified)
                                 Padding(
                                   child: Icon(Icons.brightness_1, size: 10.0),
                                   padding: EdgeInsets.symmetric(horizontal: 2.0),
@@ -251,20 +241,30 @@ class _EditorState extends State<Editor> {
                         onPointerDown: (evt) {
                           final RenderBox getBox = context.findRenderObject();
                           final local = getBox.globalToLocal(evt.position);
+                          final newCursor = EditorCursorUtil.calcNewCursor(
+                              evt,
+                              lines,
+                              testTheme,
+                              -scrollPositions[curFile].dy,
+                              -scrollPositions[curFile].dx,
+                              16.0,
+                              local.translate(-45, -5));
                           setState(() {
-                            cursors[curFile] = EditorCursorUtil.calcNewCursor(
-                                evt,
-                                lines,
-                                testTheme,
-                                -scrollPositions[curFile].dy,
-                                -scrollPositions[curFile].dx,
-                                16.0,
-                                local.translate(-45, -5));
+                            cursors[curFile] = newCursor;
                             hasMovedCursor = true;
                             cursorBlink = true;
                             postponeNextBlink = true;
                             rebuildLines = true;
                           });
+                          if (newCursor.isSelection) {
+                            MenuBarManager()
+                              ..updateItem(MenuCategory.edit, 'clipboard', 'copy', enabled: true, action: copy)
+                              ..publish();
+                          } else {
+                            MenuBarManager()
+                              ..updateItem(MenuCategory.edit, 'clipboard', 'copy', enabled: false)
+                              ..publish();
+                          }
                         },
                         onPointerSignal: (signal) {
                           if (signal is PointerScrollEvent) {
@@ -286,20 +286,32 @@ class _EditorState extends State<Editor> {
                         onPointerMove: (evt) {
                           final RenderBox getBox = context.findRenderObject();
                           final local = getBox.globalToLocal(evt.position);
+                          final newCursor = EditorCursorUtil.calcNewCursor(
+                              evt,
+                              lines,
+                              testTheme,
+                              -scrollPositions[curFile].dy,
+                              -scrollPositions[curFile].dx,
+                              16.0,
+                              local.translate(-45, -5));
                           setState(() {
-                            cursors[curFile] = EditorCursorUtil.calcNewCursor(
-                                evt,
-                                lines,
-                                testTheme,
-                                -scrollPositions[curFile].dy,
-                                -scrollPositions[curFile].dx,
-                                16.0,
-                                local.translate(-45, -5));
+                            cursors[curFile] = newCursor;
                             hasMovedCursor = true;
                             cursorBlink = true;
                             postponeNextBlink = true;
                             rebuildLines = true;
                           });
+                          if (newCursor.isSelection) {
+                            print('iselect y');
+                            MenuBarManager()
+                              ..updateItem(MenuCategory.edit, 'clipboard', 'copy', enabled: true, action: copy)
+                              ..publish();
+                          } else {
+                            print('noselect n');
+                            MenuBarManager()
+                              ..updateItem(MenuCategory.edit, 'clipboard', 'copy', enabled: false)
+                              ..publish();
+                          }
                         },
                         child: ClipRect(
                           clipBehavior: Clip.antiAlias,
@@ -326,6 +338,47 @@ class _EditorState extends State<Editor> {
     });
   }
 
+  void copy() {
+    final cursor = cursors[curFile];
+    if (!cursor.isSelection) return;
+    final data = StringBuffer();
+    final doc = Project.of(context).openFiles[curFile].document;
+    for (var i = cursor.firstLine; i <= cursor.lastLine; i++) {
+      var line = doc[i]['s'];
+      if (i == cursor.firstLine)
+        line = line.substring(cursor.firstPosition);
+      else if (i == cursor.lastLine) line = line.substring(0, cursor.lastPosition);
+      data.write(line);
+    }
+    Clipboard.setData(ClipboardData(text: data.toString()));
+  }
+
+  void paste() async {
+    final pasteData = (await Clipboard.getData(Clipboard.kTextPlain)).text;
+    if (pasteData == null || pasteData.isEmpty) return;
+    final cur = cursors[curFile];
+    final file = Project.of(context).openFiles[curFile];
+    cursorBlink = true;
+    postponeNextBlink = true;
+    final cs = Changeset.create(file.document);
+    if (cur.isSelection) {
+      composeDeleteSelection(file, cur, cs);
+    } else {
+      composeStartRelativeToCursor(file, cur, cs, 0);
+    }
+
+    cs.insert(pasteData);
+    final pasteLines = pasteData.split('\n');
+    for (var i = 0; i < pasteLines.length; i++) {
+      if (i == 0)
+        file.lineLengths[cur.firstLine] += pasteLines[i].length;
+      else
+        file.lineLengths.insert(cur.firstLine + i, pasteLines[i].length + 1);
+    }
+
+    updateDoc(finishCs(file, cs, cur));
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -345,6 +398,7 @@ class _EditorState extends State<Editor> {
       default:
         throw new Exception('Unexpected runtimeType of RawKeyEvent');
     }
+
     int keyCode;
     switch (event.data.runtimeType) {
       case RawKeyEventDataMacOs:
@@ -356,7 +410,8 @@ class _EditorState extends State<Editor> {
             final file = Project.of(context).openFiles[curFile];
             cursorBlink = true;
             postponeNextBlink = true;
-            if (keyCode == 123) {
+            if (keyCode == 55) {
+            } else if (keyCode == 123) {
               // Left
               if (cur.position != cur.endPosition) {
                 cursors[curFile] = cur.copyWith(
@@ -407,97 +462,46 @@ class _EditorState extends State<Editor> {
                 prevLineLengths[curFile] = [];
                 prevChangesets[curFile] = [];
               }
-              // Leading lines character count
-              final _ll = file.lineLengths;
-              final lc = _ll.take(cur.line).fold(0, (n, x) => n + x);
-              print('keep ${lc}, ${cur.line}, ${cur.position}');
               final cs = Changeset.create(file.document);
               Changeset ec;
-
-              void finishCs(Builder nc, [left = false]) {
-                ec = cs.finish();
-                final np = Position(cur.endPosition, cur.endLine).transform(ec, left ? 'left' : 'right');
-                cursors[curFile] = cur.copyWithSingle(line: np.line, position: np.ch);
-                prevLineLengths[curFile].add([...file.lineLengths]);
-              }
+              beginChange(file);
 
               if (keyCode == 51) {
                 // Backspace
-                print('bspace ${cur.position} ${cur.endPosition}');
-                if (cur.endPosition == 0 && cur.position == 0 && cur.endLine == cur.line) {
-                  print(lc - file.lineLengths[cur.line - 1]);
-                  print(cur.line - 1);
-                  print(file.lineLengths[cur.line - 1] - 1);
-                  cs
-                    ..keep(lc - file.lineLengths[cur.line - 1], cur.line - 1)
-                    ..keep(file.lineLengths[cur.line - 1] - 1, 0)
-                    ..remove(1, 1);
-                  print(cs);
-                  finishCs(cs);
-                  file.lineLengths[cur.line - 1] += file.lineLengths[cur.line] - 1;
-                  file.lineLengths.removeAt(cur.line);
-                } else if (cur.endPosition != cur.position || cur.endLine != cur.line) {
-                  final lcl = _ll.take(cur.firstLine).fold(0, (n, x) => n + x);
-
-                  final lcd = cur.lastLine == cur.firstLine
-                      ? 0
-                      : _ll.skip(cur.firstLine).take(cur.lastLine - cur.firstLine).fold(0, (n, x) => n + x);
-                  cs
-                    ..keep(lcl, cur.firstLine)
-                    ..keep(cur.firstPosition, 0)
-                    ..remove(cur.lastPosition - cur.firstPosition + lcd, cur.lastLine - cur.firstLine);
-                  finishCs(cs, true);
-
-                  if (cur.lastLine != cur.firstLine) {
-                    final lastL = file.lineLengths[cur.lastLine];
-                    file.lineLengths[cur.firstLine] = cur.firstPosition + lastL - cur.lastPosition;
-                    for (var i = cur.firstLine; i < cur.lastLine; i++) {
-                      file.lineLengths.removeAt(cur.firstLine + 1);
-                    }
-                  } else
-                    file.lineLengths[cur.line] -= cur.lastPosition - cur.firstPosition;
+                if (cur.isSelection) {
+                  composeDeleteSelection(file, cur, cs);
+                  ec = finishCs(file, cs, cur, true);
                 } else {
-                  cs
-                    ..keep(lc, cur.line)
-                    ..keep(cur.position - 1, 0)
-                    ..remove(1, 0);
-                  finishCs(cs);
-                  file.lineLengths[cur.line]--;
+                  final startOfLine = cur.position == 0;
+                  composeStartRelativeToCursor(file, cur, cs, -1);
+                  cs.remove(1, startOfLine ? 1 : 0);
+                  ec = finishCs(file, cs, cur);
+                  if (startOfLine) {
+                    file.lineLengths[cur.line - 1] += file.lineLengths[cur.line] - 1;
+                    file.lineLengths.removeAt(cur.line);
+                  } else
+                    file.lineLengths[cur.line]--;
                 }
               } else if (keyCode == 36) {
                 // Enter
                 final p = file.lineLengths[cur.line];
-                // print('llen');
-                // print(p);
-                cs
-                  ..keep(lc, cur.line)
-                  ..keep(cur.position, 0)
-                  ..insert('\n');
-                finishCs(cs);
+                composeStartRelativeToCursor(file, cur, cs, 0);
+                cs.insert('\n');
+                ec = finishCs(file, cs, cur);
                 file.lineLengths
                   ..[cur.line] = cur.position + 1
                   ..insert(cur.line + 1, p - cur.position);
                 hasMovedCursor = true;
-              } else {
-                print(file.lineLengths[cur.line]);
-                if (cur.endPosition != cur.position) {
-                  cs
-                    ..keep(lc, cur.firstLine)
-                    ..keep(cur.firstPosition, 0)
-                    ..remove(cur.lastPosition - cur.firstPosition, 0)
-                    ..insert(data.characters);
-                  finishCs(cs);
-                  file.lineLengths[cur.line] -= cur.lastPosition - cur.firstPosition;
-                  file.lineLengths[cur.line]++;
+              } else if (data.characters.isNotEmpty) {
+                if (cur.isSelection) {
+                  composeDeleteSelection(file, cur, cs);
+                  cs.insert(data.characters);
                 } else {
-                  cs
-                    ..keep(lc, cur.line)
-                    ..keep(cur.position, 0)
-                    ..insert(data.characters);
-                  finishCs(cs);
-                  file.lineLengths[cur.line] += data.characters.length;
+                  composeStartRelativeToCursor(file, cur, cs, 0);
+                  cs.insert(data.characters);
                 }
-                print(file.lineLengths[cur.line]);
+                file.lineLengths[cur.firstLine] += data.characters.length;
+                ec = finishCs(file, cs, cur);
               }
 
               if (keyCode == 51) {
@@ -509,25 +513,43 @@ class _EditorState extends State<Editor> {
                 wasBackspacing = false;
                 hasMovedCursor = true;
               }
-
-              Project.of(context).updateFile(curFile, ec);
-              if (!hasMovedCursor && prevChangesets.isNotEmpty && prevChangesets[curFile].isNotEmpty) {
-                prevChangesets[curFile].last = prevChangesets[curFile].last.compose(ec);
-                prevLineLengths[curFile].removeAt(prevLineLengths[curFile].length - 1);
-              } else {
-                prevChangesets[curFile].add(ec);
-                hasMovedCursor = false;
+              if (ec != null) {
+                updateDoc(ec);
               }
-              didUpdateDoc = true;
-              MenuBarManager()
-                ..updateItem(MenuCategory.edit, 'undo', 'undo', enabled: true)
-                ..publish();
             }
           });
         break;
       default:
         throw new Exception('Unsupported platform ${event.data.runtimeType}');
     }
+  }
+
+  void beginChange(ProjectFile file) {
+    currentChangeLineLength[curFile] = [...file.lineLengths];
+  }
+
+  Changeset finishCs(ProjectFile file, Builder cs, EditorCursor cur, [left = false]) {
+    final ec = cs.finish();
+    final np = Position(cur.endPosition, cur.endLine).transform(ec, left ? 'left' : 'right');
+    cursors[curFile] = cur.copyWithSingle(line: np.line, position: np.ch);
+    prevLineLengths[curFile].add(currentChangeLineLength[curFile]);
+    return ec;
+  }
+
+  void updateDoc(Changeset ec) {
+    Project.of(context).updateFile(curFile, ec);
+    if (!hasMovedCursor && prevChangesets.isNotEmpty && prevChangesets[curFile].isNotEmpty) {
+      prevChangesets[curFile].last = prevChangesets[curFile].last.compose(ec);
+      prevLineLengths[curFile].removeAt(prevLineLengths[curFile].length - 1);
+    } else {
+      prevChangesets[curFile].add(ec);
+      hasMovedCursor = false;
+    }
+    didUpdateDoc = true;
+    MenuBarManager()
+      ..updateItem(MenuCategory.edit, 'undo', 'undo', enabled: true)
+      ..updateItem(MenuCategory.file, 'save', 'save', enabled: true)
+      ..publish();
   }
 
   int lineLength(int line) {

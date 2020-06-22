@@ -239,6 +239,9 @@ class EditorCursor {
       return endPosition;
   }
 
+  /// Whether this cursor contains a selection
+  bool get isSelection => position != endPosition || line != endLine;
+
   @override
   String toString() {
     return 'EditorCursor{line: $line, endLine: $endLine, position: $position, endPosition: $endPosition}';

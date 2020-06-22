@@ -58,7 +58,9 @@ class _IonaAppState extends State<IonaApp> {
                     body2: TextStyle(color: IdeTheme.of(context).textActive.col, fontSize: 12.0),
                   )),
               home: IonaHome(title: 'Iona'),
-              shortcuts: const {/* ...WidgetsApp.defaultShortcuts */},
+              shortcuts: const {
+                /* ...WidgetsApp.defaultShortcuts */
+              },
             );
           }),
         ));
@@ -120,6 +122,7 @@ class _IonaHomeState extends State<IonaHome> {
   }
 
   void _setupBaseMenus() {
+    final opKey = Platform.isWindows ? LogicalKeyboardKey.control : LogicalKeyboardKey.meta;
     MenuBarManager()
       ..setItem(
           MenuCategory.file,
@@ -130,7 +133,7 @@ class _IonaHomeState extends State<IonaHome> {
                 .then((res) {
               print(res.paths);
             });
-          }, shortcut: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyN)))
+          }, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyN)))
       ..setItem(
           MenuCategory.file,
           'open',
@@ -140,34 +143,49 @@ class _IonaHomeState extends State<IonaHome> {
                 .then((res) {
               if (!res.canceled && res.paths.isNotEmpty) Project.of(context).rootFolder = res.paths.first;
             });
-          }, shortcut: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyO)))
+          }, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyO)))
       ..setItem(
           MenuCategory.file,
           'save',
           MenuActionOrSubmenu('save', 'Save',
-              action: () {}, shortcut: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyS), enabled: false))
+              action: () {}, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyS), enabled: false))
       ..setItem(
           MenuCategory.edit,
           'undo',
           MenuActionOrSubmenu('undo', 'Undo',
-              enabled: false, action: () {}, shortcut: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyZ)))
+              enabled: false, action: () {}, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyZ)))
       ..setItem(
           MenuCategory.edit,
           'undo',
           MenuActionOrSubmenu('redo', 'Redo',
               action: () {},
               enabled: false,
-              shortcut: LogicalKeySet(LogicalKeyboardKey.shift, LogicalKeyboardKey.meta, LogicalKeyboardKey.keyZ)))
+              shortcut: LogicalKeySet(LogicalKeyboardKey.shift, opKey, LogicalKeyboardKey.keyZ)))
       ..setItem(
           MenuCategory.edit,
           'find',
           MenuActionOrSubmenu('find', 'Find',
-              action: () {}, shortcut: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyF)))
+              enabled: false, action: () {}, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyF)))
       ..setItem(
           MenuCategory.edit,
           'find',
           MenuActionOrSubmenu('replace', 'Replace',
-              action: () {}, shortcut: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyR)))
+              action: () {}, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyR)))
+      ..setItem(
+          MenuCategory.edit,
+          'clipboard',
+          MenuActionOrSubmenu('cut', 'Cut',
+              enabled: false, action: () {}, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyX)))
+      ..setItem(
+          MenuCategory.edit,
+          'clipboard',
+          MenuActionOrSubmenu('copy', 'Copy',
+              enabled: false, action: () {}, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyC)))
+      ..setItem(
+          MenuCategory.edit,
+          'clipboard',
+          MenuActionOrSubmenu('paste', 'Paste',
+              enabled: false, action: () {}, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyV)))
       ..publish();
   }
 }
