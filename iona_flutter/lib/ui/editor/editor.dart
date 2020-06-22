@@ -309,7 +309,7 @@ class _EditorState extends State<Editor> {
         ..publish();
     } else {
       MenuBarManager()
-        ..updateItem(MenuCategory.edit, 'clipboard', 'cut', enabled: true, action: cut)
+        ..updateItem(MenuCategory.edit, 'clipboard', 'cut', enabled: false)
         ..updateItem(MenuCategory.edit, 'clipboard', 'copy', enabled: false)
         ..publish();
     }
