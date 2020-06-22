@@ -344,9 +344,9 @@ class _EditorState extends State<Editor> {
     final data = StringBuffer();
     final doc = Project.of(context).openFiles[curFile].document;
     for (var i = cursor.firstLine; i <= cursor.lastLine; i++) {
-      var line = doc[i]['s'];
+      String line = doc[i]['s'];
       if (i == cursor.firstLine)
-        line = line.substring(cursor.firstPosition);
+        line = line.substring(cursor.firstPosition, i == cursor.lastLine ? cursor.lastPosition : null);
       else if (i == cursor.lastLine) line = line.substring(0, cursor.lastPosition);
       data.write(line);
     }
@@ -360,6 +360,7 @@ class _EditorState extends State<Editor> {
     final file = Project.of(context).openFiles[curFile];
     cursorBlink = true;
     postponeNextBlink = true;
+    beginChange(file);
     final cs = Changeset.create(file.document);
     if (cur.isSelection) {
       composeDeleteSelection(file, cur, cs);
