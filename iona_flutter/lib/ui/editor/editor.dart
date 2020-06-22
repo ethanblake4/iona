@@ -239,32 +239,7 @@ class _EditorState extends State<Editor> {
                     Expanded(child: LayoutBuilder(builder: (context, constraints) {
                       return Listener(
                         onPointerDown: (evt) {
-                          final RenderBox getBox = context.findRenderObject();
-                          final local = getBox.globalToLocal(evt.position);
-                          final newCursor = EditorCursorUtil.calcNewCursor(
-                              evt,
-                              lines,
-                              testTheme,
-                              -scrollPositions[curFile].dy,
-                              -scrollPositions[curFile].dx,
-                              16.0,
-                              local.translate(-45, -5));
-                          setState(() {
-                            cursors[curFile] = newCursor;
-                            hasMovedCursor = true;
-                            cursorBlink = true;
-                            postponeNextBlink = true;
-                            rebuildLines = true;
-                          });
-                          if (newCursor.isSelection) {
-                            MenuBarManager()
-                              ..updateItem(MenuCategory.edit, 'clipboard', 'copy', enabled: true, action: copy)
-                              ..publish();
-                          } else {
-                            MenuBarManager()
-                              ..updateItem(MenuCategory.edit, 'clipboard', 'copy', enabled: false)
-                              ..publish();
-                          }
+                          _handlePointerPositionEvent(context, evt);
                         },
                         onPointerSignal: (signal) {
                           if (signal is PointerScrollEvent) {
@@ -284,34 +259,7 @@ class _EditorState extends State<Editor> {
                           }
                         },
                         onPointerMove: (evt) {
-                          final RenderBox getBox = context.findRenderObject();
-                          final local = getBox.globalToLocal(evt.position);
-                          final newCursor = EditorCursorUtil.calcNewCursor(
-                              evt,
-                              lines,
-                              testTheme,
-                              -scrollPositions[curFile].dy,
-                              -scrollPositions[curFile].dx,
-                              16.0,
-                              local.translate(-45, -5));
-                          setState(() {
-                            cursors[curFile] = newCursor;
-                            hasMovedCursor = true;
-                            cursorBlink = true;
-                            postponeNextBlink = true;
-                            rebuildLines = true;
-                          });
-                          if (newCursor.isSelection) {
-                            print('iselect y');
-                            MenuBarManager()
-                              ..updateItem(MenuCategory.edit, 'clipboard', 'copy', enabled: true, action: copy)
-                              ..publish();
-                          } else {
-                            print('noselect n');
-                            MenuBarManager()
-                              ..updateItem(MenuCategory.edit, 'clipboard', 'copy', enabled: false)
-                              ..publish();
-                          }
+                          _handlePointerPositionEvent(context, evt);
                         },
                         child: ClipRect(
                           clipBehavior: Clip.antiAlias,
@@ -338,6 +286,49 @@ class _EditorState extends State<Editor> {
     });
   }
 
+  void _handlePointerPositionEvent(BuildContext context, PointerEvent event) {
+    final RenderBox getBox = context.findRenderObject();
+    final local = getBox.globalToLocal(event.position);
+    final newCursor = EditorCursorUtil.calcNewCursor(event, lines, testTheme, -scrollPositions[curFile].dy,
+        -scrollPositions[curFile].dx, 16.0, local.translate(-45, -5));
+    setState(() {
+      cursors[curFile] = newCursor;
+      hasMovedCursor = true;
+      cursorBlink = true;
+      postponeNextBlink = true;
+      rebuildLines = true;
+    });
+    updateMenus(newCursor);
+  }
+
+  void updateMenus(EditorCursor newCursor) {
+    if (newCursor.isSelection) {
+      MenuBarManager()
+        ..updateItem(MenuCategory.edit, 'clipboard', 'cut', enabled: true, action: cut)
+        ..updateItem(MenuCategory.edit, 'clipboard', 'copy', enabled: true, action: copy)
+        ..publish();
+    } else {
+      MenuBarManager()
+        ..updateItem(MenuCategory.edit, 'clipboard', 'cut', enabled: true, action: cut)
+        ..updateItem(MenuCategory.edit, 'clipboard', 'copy', enabled: false)
+        ..publish();
+    }
+  }
+
+  void cut() {
+    final cur = cursors[curFile];
+    if (!cur.isSelection) {
+      return;
+    }
+    copy();
+    final file = Project.of(context).openFiles[curFile];
+    setState(() {
+      final cs = beginChange(file);
+      composeDeleteSelection(file, cur, cs);
+      updateDoc(finishCs(file, cs, cur));
+    });
+  }
+
   void copy() {
     final cursor = cursors[curFile];
     if (!cursor.isSelection) return;
@@ -360,30 +351,25 @@ class _EditorState extends State<Editor> {
     final file = Project.of(context).openFiles[curFile];
     cursorBlink = true;
     postponeNextBlink = true;
-    beginChange(file);
-    final cs = Changeset.create(file.document);
-    if (cur.isSelection) {
-      composeDeleteSelection(file, cur, cs);
-    } else {
-      composeStartRelativeToCursor(file, cur, cs, 0);
-    }
+    setState(() {
+      final cs = beginChange(file);
+      if (cur.isSelection) {
+        composeDeleteSelection(file, cur, cs);
+      } else {
+        composeStartRelativeToCursor(file, cur, cs, 0);
+      }
 
-    cs.insert(pasteData);
-    final pasteLines = pasteData.split('\n');
-    for (var i = 0; i < pasteLines.length; i++) {
-      if (i == 0)
-        file.lineLengths[cur.firstLine] += pasteLines[i].length;
-      else
-        file.lineLengths.insert(cur.firstLine + i, pasteLines[i].length + 1);
-    }
+      cs.insert(pasteData);
+      final pasteLines = pasteData.split('\n');
+      for (var i = 0; i < pasteLines.length; i++) {
+        if (i == 0)
+          file.lineLengths[cur.firstLine] += pasteLines[i].length;
+        else
+          file.lineLengths.insert(cur.firstLine + i, pasteLines[i].length + 1);
+      }
 
-    updateDoc(finishCs(file, cs, cur));
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    gestureDelegator.close();
+      updateDoc(finishCs(file, cs, cur));
+    });
   }
 
   void onKeyEvent(RawKeyEvent event) {
@@ -411,8 +397,7 @@ class _EditorState extends State<Editor> {
             final file = Project.of(context).openFiles[curFile];
             cursorBlink = true;
             postponeNextBlink = true;
-            if (keyCode == 55) {
-            } else if (keyCode == 123) {
+            if (keyCode == 123) {
               // Left
               if (cur.position != cur.endPosition) {
                 cursors[curFile] = cur.copyWith(
@@ -463,9 +448,8 @@ class _EditorState extends State<Editor> {
                 prevLineLengths[curFile] = [];
                 prevChangesets[curFile] = [];
               }
-              final cs = Changeset.create(file.document);
               Changeset ec;
-              beginChange(file);
+              final cs = beginChange(file);
 
               if (keyCode == 51) {
                 // Backspace
@@ -517,6 +501,7 @@ class _EditorState extends State<Editor> {
               if (ec != null) {
                 updateDoc(ec);
               }
+              updateMenus(cursors[curFile]);
             }
           });
         break;
@@ -525,8 +510,11 @@ class _EditorState extends State<Editor> {
     }
   }
 
-  void beginChange(ProjectFile file) {
+  Builder beginChange(ProjectFile file) {
     currentChangeLineLength[curFile] = [...file.lineLengths];
+    cursorBlink = true;
+    postponeNextBlink = true;
+    return Changeset.create(file.document);
   }
 
   Changeset finishCs(ProjectFile file, Builder cs, EditorCursor cur, [left = false]) {
@@ -556,5 +544,11 @@ class _EditorState extends State<Editor> {
   int lineLength(int line) {
     var doc = Project.of(context).openFiles[curFile].document;
     return doc[line]['s'].length - 1;
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    gestureDelegator.close();
   }
 }

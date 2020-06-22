@@ -163,16 +163,6 @@ class _IonaHomeState extends State<IonaHome> {
               shortcut: LogicalKeySet(LogicalKeyboardKey.shift, opKey, LogicalKeyboardKey.keyZ)))
       ..setItem(
           MenuCategory.edit,
-          'find',
-          MenuActionOrSubmenu('find', 'Find',
-              enabled: false, action: () {}, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyF)))
-      ..setItem(
-          MenuCategory.edit,
-          'find',
-          MenuActionOrSubmenu('replace', 'Replace',
-              action: () {}, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyR)))
-      ..setItem(
-          MenuCategory.edit,
           'clipboard',
           MenuActionOrSubmenu('cut', 'Cut',
               enabled: false, action: () {}, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyX)))
@@ -186,6 +176,16 @@ class _IonaHomeState extends State<IonaHome> {
           'clipboard',
           MenuActionOrSubmenu('paste', 'Paste',
               enabled: false, action: () {}, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyV)))
+      ..setItem(
+          MenuCategory.edit,
+          'find',
+          MenuActionOrSubmenu('find', 'Find',
+              enabled: false, action: () {}, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyF)))
+      ..setItem(
+          MenuCategory.edit,
+          'find',
+          MenuActionOrSubmenu('replace', 'Replace',
+              action: () {}, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyR)))
       ..publish();
   }
 }

@@ -7,7 +7,6 @@ void composeStartRelativeToCursor(ProjectFile file, EditorCursor cur, Builder cs
   final firstPos = cur.firstPosition;
   final startLine = cur.firstLine;
   final less1 = (firstPos + offset) < 0;
-  print(less1);
   final lcl = file.lineLengths.take(startLine - (less1 ? 1 : 0)).fold(0, (n, x) => n + x);
 
   cs..keep(lcl, startLine - (less1 ? 1 : 0))..keep((less1 ? file.lineLengths[startLine - 1] : firstPos) + offset, 0);
