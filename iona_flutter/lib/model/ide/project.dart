@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
+import 'package:iona_flutter/model/event/global_events.dart';
 import 'package:iona_flutter/util/ot/atext_changeset.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:sembast/sembast.dart';
@@ -31,12 +32,11 @@ class Project extends Model {
   void openFile(String filepath) async {
     var file = File(filepath);
     var fstr = await file.readAsString();
-    print(fstr);
     var doc = ADocument.fromText(fstr + '\n');
     openFiles[filepath] = ProjectFile(filepath, filepath.substring(filepath.lastIndexOf('/') + 1), file, doc, []);
     openFiles[filepath].lineLengths = doc.map((line) => (line['s'] as String).length).toList();
     notifyListeners();
-    print(openFiles[filepath]);
+    eventBus.fire(MakeEditorFileActive(filepath));
   }
 
   /// Updates the file specified by [filepath] with the associated [changes],
@@ -49,11 +49,13 @@ class Project extends Model {
 
   /// Saves the file specified by [filepath]
   void saveFile(String filepath) {
+    print("save file");
     if (!openFiles[filepath].hasModified) return;
-    openFiles[filepath].file.writeAsStringSync(
-        openFiles[filepath].document.map((line) => (line['s'] as String)).reduce((s1, s2) => s1 + s2));
+    var outstr = openFiles[filepath].document.map((line) => (line['s'] as String)).reduce((s1, s2) => s1 + s2);
+    openFiles[filepath].file.writeAsStringSync(outstr.substring(0, outstr.length - 1));
     openFiles[filepath].hasModified = false;
     notifyListeners();
+    eventBus.fire(SaveFile(filepath, true));
   }
 
   /// Closes the file specified by [filepath]

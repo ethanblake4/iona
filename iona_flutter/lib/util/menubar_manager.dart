@@ -88,9 +88,6 @@ class MenuBarManager {
       ind.title = title;
       hasChanged = true;
     }
-
-    print('hasChanged: $hasChanged');
-
     return hasChanged;
   }
 

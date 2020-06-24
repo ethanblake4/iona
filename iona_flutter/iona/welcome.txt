@@ -1,6 +1,3 @@
-a
-ab
-abc
-abcd
-abcde
-abcdef
+Welcome to Iona!
+
+To get started, choose File > Open.

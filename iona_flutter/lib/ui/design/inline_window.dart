@@ -4,9 +4,11 @@ import 'package:iona_flutter/model/ide/ide_theme.dart';
 class InlineWindow extends StatefulWidget {
   Widget child;
   Widget header;
+  BoxConstraints constraints;
+
   Function(RawKeyEvent) onKey;
 
-  InlineWindow({Key key, this.child, this.header, this.onKey}) : super(key: key);
+  InlineWindow({Key key, this.child, this.header, this.onKey, this.constraints}) : super(key: key);
 
   @override
   InlineWindowState createState() => new InlineWindowState();
@@ -38,30 +40,36 @@ class InlineWindowState extends State<InlineWindow> {
   Widget build(BuildContext context) {
     return new _InlineWindow(
       data: this,
-      child: GestureDetector(
-          onTap: () {
-            FocusScope.of(context).requestFocus(_focusNode);
-          },
-          child: RawKeyboardListener(
-              focusNode: _focusNode,
-              onKey: widget.onKey,
-              child: Column(children: [
-                Row(children: <Widget>[
+      child: ConstrainedBox(
+        constraints: widget.constraints,
+        child: GestureDetector(
+            onTap: () {
+              FocusScope.of(context).requestFocus(_focusNode);
+            },
+            child: RawKeyboardListener(
+                focusNode: _focusNode,
+                onKey: widget.onKey,
+                child: Column(children: [
+                  Row(children: <Widget>[
+                    Expanded(
+                      child: Material(
+                          color: _focusNode.hasFocus
+                              ? IdeTheme.of(context).windowHeaderActive.col
+                              : IdeTheme.of(context).windowHeader.col,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 5.0),
+                            child: widget.header,
+                          )),
+                    ),
+                  ]),
                   Expanded(
-                    child: Material(
-                        color: _focusNode.hasFocus
-                            ? IdeTheme.of(context).windowHeaderActive.col
-                            : IdeTheme.of(context).windowHeader.col,
-                        child: widget.header),
-                  ),
-                ]),
-                Expanded(
-                    child: Row(
-                  children: <Widget>[
-                    Expanded(child: widget.child),
-                  ],
-                ))
-              ]))),
+                      child: Row(
+                    children: <Widget>[
+                      Expanded(child: widget.child),
+                    ],
+                  ))
+                ]))),
+      ),
     );
   }
 }

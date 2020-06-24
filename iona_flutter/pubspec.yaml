@@ -2,8 +2,8 @@ name: iona_flutter
 description: A code editor built in Flutter.
 
 environment:
-  sdk: '>=2.8.0 <3.0.0'
-  flutter: '>=1.10.2-pre.54'
+  sdk: '>=2.9.0-18.0.dev <3.0.0'
+  flutter: '>=1.17.0'
 
 dependencies:
   flutter:
@@ -21,8 +21,13 @@ dependencies:
   equatable:
   piecemeal: any
   cupertino_icons: ^0.1.0
+  analyzer:
+  selection_menu: ^0.9.0
   ffi_terminal:
     path: /Users/ethanelshyeb/ffi_terminal
+  devtools_app:
+    path: ../devtools/packages/devtools_app
+
 
   # Desktop embedder plugins.
   # Note: In an actual project, these paths would include the

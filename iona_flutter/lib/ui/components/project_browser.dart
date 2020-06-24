@@ -23,10 +23,8 @@ class _ProjectBrowserState extends State<ProjectBrowser> {
           rootFolder = model.rootFolder;
         }
         return InlineWindow(
-          header: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-            child: Text('Project'),
-          ),
+          constraints: BoxConstraints.tightFor(width: 280),
+          header: Text('Project'),
           child: Material(
             color: IdeTheme.of(context).projectBrowserBackground.col,
             child: FileTreeSelectionParent(

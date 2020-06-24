@@ -135,8 +135,8 @@ class _TerminalState extends State<Terminal> {
   @override
   void dispose() {
     super.dispose();
-    data.cancel();
-    err.cancel();
+    if (data != null) data.cancel();
+    if (err != null) err.cancel();
   }
 
   String _getLineText(int line) {
@@ -153,6 +153,7 @@ class _TerminalState extends State<Terminal> {
   @override
   Widget build(BuildContext context) {
     return InlineWindow(
+        constraints: BoxConstraints.tightFor(height: 230),
         onKey: (k) {
           final d = rawKeyToKeyData(k);
           var mods = VTERM_MOD_NONE;
@@ -195,7 +196,7 @@ class _TerminalState extends State<Terminal> {
           read(0, false);
         },
         header: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+          padding: const EdgeInsets.symmetric(horizontal: 0.0),
           child: Text('Terminal'),
         ),
         child: Listener(

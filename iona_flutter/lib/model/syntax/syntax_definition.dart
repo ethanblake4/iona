@@ -24,7 +24,7 @@ class SyntaxDefinition {
         yaml['scope'],
         (yaml['contexts']).map((s, d) => MapEntry(s, DefinitionContext.parseYaml(d))),
         (yaml['file_extensions']).cast<String>(),
-        yaml['variables']);
+        outMap);
   }
 
   /// Name of the language, e.g. JSON

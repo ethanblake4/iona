@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart' show debugDefaultTargetPlatformOverride
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:iona_flutter/plugin/dart/dart_analysis.dart';
+import 'package:iona_flutter/plugin/dart/flutter_ui_editor.dart';
 import 'package:scoped_model/scoped_model.dart';
 
 import 'model/ide/ide_theme.dart';
@@ -14,7 +16,10 @@ import 'ui/components/project_browser.dart';
 import 'ui/editor/editor.dart';
 import 'util/menubar_manager.dart';
 
+String claps = "no";
+
 void main() {
+  print(claps);
   debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
   var dir = Directory('./Iona');
   if (!dir.existsSync()) {
@@ -23,7 +28,9 @@ void main() {
       ..createSync()
       ..writeAsStringSync('Welcome to Iona!\n\nTo get started, choose File > Open from the menu.\n');
   }
+
   runApp(IonaApp());
+  DartAnalyzer();
 }
 
 /// The top level app
@@ -54,8 +61,8 @@ class _IonaAppState extends State<IonaApp> {
                   iconTheme: IconThemeData(color: IdeTheme.of(context).text.col),
                   fontFamily: 'Roboto',
                   textTheme: TextTheme(
-                    body1: TextStyle(color: IdeTheme.of(context).text.col, fontSize: 12.0),
-                    body2: TextStyle(color: IdeTheme.of(context).textActive.col, fontSize: 12.0),
+                    bodyText2: TextStyle(color: IdeTheme.of(context).text.col, fontSize: 12.0),
+                    bodyText1: TextStyle(color: IdeTheme.of(context).textActive.col, fontSize: 12.0),
                   )),
               home: IonaHome(title: 'Iona'),
               shortcuts: const {
@@ -77,9 +84,21 @@ class IonaHome extends StatefulWidget {
   _IonaHomeState createState() => _IonaHomeState();
 }
 
+class CoolWidget extends StatefulWidget {
+  @override
+  _CoolWidgetState createState() => _CoolWidgetState();
+}
+
+class _CoolWidgetState extends State<CoolWidget> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(child: Text("Hello"));
+  }
+}
+
 class _IonaHomeState extends State<IonaHome> {
   double browserExtentX = 280.0;
-  double termExtentY = 230.0;
+  double termExtentY = 256.0;
 
   @override
   void initState() {
@@ -102,16 +121,14 @@ class _IonaHomeState extends State<IonaHome> {
             child: Row(
               mainAxisSize: MainAxisSize.max,
               children: <Widget>[
-                ConstrainedBox(
-                  constraints: BoxConstraints.tightFor(width: browserExtentX),
-                  child: ProjectBrowser(),
-                ),
+                ProjectBrowser(),
                 Expanded(
                   child: ConstrainedBox(
                     child: Editor(),
                     constraints: BoxConstraints.tightFor(height: constraints.maxHeight),
                   ),
-                )
+                ),
+                FlutterUiEditor(),
               ],
             ),
           ),
@@ -135,6 +152,12 @@ class _IonaHomeState extends State<IonaHome> {
             });
           }, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.shift, LogicalKeyboardKey.keyN)))
       ..setItem(
+          MenuCategory.edit,
+          'analyze',
+          MenuActionOrSubmenu('analyze', 'Analyze', action: () {
+            DartAnalyzer().flutterFileInfo('${Project.of(context).rootFolder}/lib/main.dart').then(print);
+          }, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyP)))
+      ..setItem(
           MenuCategory.file,
           'open',
           MenuActionOrSubmenu('open', 'Open', action: () {
@@ -142,6 +165,7 @@ class _IonaHomeState extends State<IonaHome> {
                 .showOpenPanel(canSelectDirectories: true, allowedFileTypes: [], confirmButtonText: 'Open')
                 .then((res) {
               if (!res.canceled && res.paths.isNotEmpty) Project.of(context).rootFolder = res.paths.first;
+              DartAnalyzer().maybeAnalyzeRootFolder(res.paths.first);
             });
           }, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyO)))
       ..setItem(

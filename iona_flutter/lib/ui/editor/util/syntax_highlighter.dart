@@ -14,152 +14,6 @@ abstract class SyntaxHighlighter {
   List<EditorUiLine> highlight(List<String> lines);
 }
 
-class BasicSyntaxHighlighter implements SyntaxHighlighter {
-  String whitespace = ' ';
-  final accessmod = [];
-  final keyword = [
-    'final',
-    'var',
-    'for',
-    'in',
-    'this',
-    'class',
-    'abstract',
-    'static',
-    'const',
-    'import',
-    'void',
-    'extends',
-    'true',
-    'false',
-    'null',
-    'wow=='
-  ];
-  final types = ['int', 'double', 'num', 'bool', 'String', 'Map', 'List', 'Set'];
-  final paren = ['(', ')', '[', ']', '{', '}'];
-  final operator = ['=', '<', '>', '<=', '>=', '--', '++', '+=', '-=', '/', '*'];
-  final number = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-
-  @override
-  List<EditorUiLine> highlight(List<String> lines) {
-    final sb = StringBuffer();
-    final outLines = <EditorUiLine>[];
-    var inMultilineString = false;
-    var mlStringState = 0;
-    var inNumber = false;
-    for (final line in lines) {
-      String inStringChar;
-      sb.clear();
-      final frags = <EditorTextFragment>[];
-      for (final rune in line.runes) {
-        final ch = String.fromCharCode(rune);
-        if (ch == '\n') continue;
-        sb.write(ch);
-
-        if (ch == inStringChar) {
-          // Multiline? Or end?
-          if (mlStringState != -1) {
-            mlStringState++;
-            if (mlStringState == 2) {
-              inMultilineString = true;
-            }
-          }
-          if (!inMultilineString || mlStringState == 5) {
-            frags.add(EditorTextFragment(
-                'dart',
-                (inMultilineString ? 'string.multiline' : 'string.') + (inStringChar == '"' ? 'double' : 'single'),
-                sb.toString()));
-            inMultilineString = false;
-            inStringChar = null;
-            sb.clear();
-            continue;
-          }
-        } else if (ch == '"' || ch == "'") {
-          final cc = sb.toString();
-          frags.add(EditorTextFragment('undef', 'undef', cc.substring(0, cc.length - 1)));
-          sb.clear();
-          sb.write(ch);
-          // String start
-          inStringChar = ch;
-          mlStringState = 0;
-          //print('string start');
-        } else if (inStringChar != null && mlStringState < 2) {
-          if (mlStringState < 2)
-            mlStringState = -1;
-          else if (mlStringState > 2) mlStringState = 2;
-          continue;
-        } else if (!inNumber && ch == whitespace && sb.isNotEmpty) {
-          frags.add(EditorTextFragment('undef', 'undef', sb.toString()));
-          sb.clear();
-          continue;
-        }
-
-        final acc = sb.toString();
-        if (inNumber && !number.contains(ch)) {
-          if (ch == '.') continue;
-          inNumber = false;
-          if (acc.substring(0, acc.length - 1).endsWith('.')) {
-            frags.add(EditorTextFragment('dart', 'number', acc.substring(0, acc.length - 2)));
-            frags.add(EditorTextFragment('undef', 'undef', '.'));
-            sb.clear();
-            sb.write(ch);
-          } else {
-            frags.add(EditorTextFragment('dart', 'number', acc.substring(0, acc.length - 1)));
-            sb.clear();
-            sb.write(ch);
-          }
-        }
-
-        if (accessmod.contains(acc)) {
-          frags.add(EditorTextFragment('dart', 'accessmod', acc));
-          sb.clear();
-          continue;
-        } else if (keyword.contains(acc)) {
-          frags.add(EditorTextFragment('dart', 'keyword', acc));
-          sb.clear();
-          continue;
-        } else if (paren.contains(acc)) {
-          frags.add(EditorTextFragment('dart', 'paren', acc));
-          sb.clear();
-          continue;
-        } else if (operator.contains(acc)) {
-          frags.add(EditorTextFragment('dart', 'operator', acc));
-          sb.clear();
-          continue;
-        } else if (number.contains(acc)) {
-          inNumber = true;
-          continue;
-        } else if (types.contains(acc)) {
-          frags.add(EditorTextFragment('dart', 'type', acc));
-          sb.clear();
-          continue;
-        }
-
-        if (paren.contains(ch)) {
-          final cc = sb.toString();
-          frags.add(EditorTextFragment('undef', 'undef', cc.substring(0, cc.length - 1)));
-          frags.add(EditorTextFragment('dart', 'paren', ch));
-          sb.clear();
-          continue;
-        } else if (operator.contains(ch)) {
-          final cc = sb.toString();
-          frags.add(EditorTextFragment('undef', 'undef', cc.substring(0, cc.length - 1)));
-          frags.add(EditorTextFragment('dart', 'operator', ch));
-          sb.clear();
-          continue;
-        }
-      }
-
-      frags.add(EditorTextFragment('undef', 'undef', sb.toString()));
-      outLines.add(EditorUiLine(frags));
-    }
-
-    print(outLines);
-
-    return outLines;
-  }
-}
-
 class ParserState {
   ListQueue<String> activeScopes;
   ListQueue<DefinitionContext> contexts;
@@ -187,6 +41,19 @@ class StandardSyntaxHighlighter implements SyntaxHighlighter {
     final outLines = <EditorUiLine>[];
     activeScopes.add(def.scope);
     // loop over each line
+
+    var protoMatches = prototype == null
+        ? []
+        : prototype.match
+            .expand((el) => el.match != null
+                ? [el.match]
+                : _flattenContexts([el.include]).expand((ctx) => (def.contexts[ctx] as DefinitionContext)
+                    .match
+                    .map((m) => m.match)
+                    .where((e) => e != null)
+                    .toList()))
+            .toList();
+
     for (final line in lines) {
       final frags = <EditorTextFragment>[];
       var readPos = 0;
@@ -197,10 +64,18 @@ class StandardSyntaxHighlighter implements SyntaxHighlighter {
         final _matchForContext = <RegExpMatch, MatchPattern>{};
         RegExpMatch _zeroMatch;
         final ctx = contexts.first;
-        final m = ctx.match.expand((el) => el.match != null
-            ? [el.match]
-            : _flattenContexts([el.include]).expand((ctx) =>
-                (def.contexts[ctx] as DefinitionContext).match.map((m) => m.match).where((e) => e != null).toList()));
+        var m = ctx.match
+            .expand((el) => el.match != null
+                ? [el.match]
+                : _flattenContexts([el.include]).expand((ctx) => (def.contexts[ctx] as DefinitionContext)
+                    .match
+                    .map((m) => m.match)
+                    .where((e) => e != null)
+                    .toList()))
+            .toList();
+        if (ctx.metaIncludePrototype != false) {
+          m = [...protoMatches, ...m];
+        }
 
         final textFrag = line.substring(readPos);
         for (final _match in m) {

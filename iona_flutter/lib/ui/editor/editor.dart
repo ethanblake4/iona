@@ -6,6 +6,7 @@ import 'package:flutter/material.dart' hide Builder;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/src/gestures/events.dart';
+import 'package:iona_flutter/model/event/global_events.dart';
 import 'package:iona_flutter/model/ide/ide_theme.dart';
 import 'package:iona_flutter/model/ide/project.dart';
 import 'package:iona_flutter/model/syntax/syntax_definition.dart';
@@ -54,6 +55,7 @@ class _EditorState extends State<Editor> {
   SyntaxDefinition currentSyntax;
 
   List<EditorUiLine> lines = [];
+  StreamSubscription _changeActiveFileSubscription;
 
   @override
   void initState() {
@@ -85,10 +87,24 @@ class _EditorState extends State<Editor> {
         }
       })
       ..updateItem(MenuCategory.edit, 'clipboard', 'paste', enabled: true, action: paste)
-      ..updateItem(MenuCategory.file, 'save', 'save', enabled: false, action: () {
-        Project.of(context).saveFile(curFile);
-      })
+      ..updateItem(MenuCategory.file, 'save', 'save', enabled: false, action: saveCurrentFile)
       ..publish();
+    _changeActiveFileSubscription = eventBus.on<MakeEditorFileActive>().listen((event) {
+      setState(() {
+        curFile = Project.of(context).openFiles[event.file].fileLocation;
+        eventBus.fire(EditorFileActiveEvent(curFile));
+        if (!scrollPositions.containsKey(curFile)) {
+          scrollPositions[curFile] = Offset.zero;
+        }
+        if (!cursors.containsKey(curFile)) {
+          cursors[curFile] = EditorCursor(0, 0, 0, 0);
+        }
+      });
+    });
+  }
+
+  void saveCurrentFile() {
+    Project.of(context).saveFile(curFile);
   }
 
   void reupBlink() => Future.delayed(const Duration(milliseconds: 550), () {
@@ -107,6 +123,7 @@ class _EditorState extends State<Editor> {
       if (openFiles.isNotEmpty) {
         if (curFile == '') {
           curFile = openFiles.values.first.fileLocation;
+          eventBus.fire(EditorFileActiveEvent(curFile));
           scrollPositions[curFile] = Offset.zero;
           cursors[curFile] = EditorCursor(0, 0, 0, 0);
           undoPosition[curFile] = 0;
@@ -124,7 +141,7 @@ class _EditorState extends State<Editor> {
               break;
             }
           }
-          print(doc.last.toString());
+          //print(doc.last.toString());
           lines = StandardSyntaxHighlighter(currentSyntax.name, currentSyntax)
               .highlight(doc.map((it) => it['s']).toList().cast<String>());
           displayedDoc = curFile;
@@ -184,6 +201,7 @@ class _EditorState extends State<Editor> {
                           setState(() {
                             FocusScope.of(context).requestFocus(_focusNode);
                             curFile = file.fileLocation;
+                            eventBus.fire(EditorFileActiveEvent(curFile));
                             if (!scrollPositions.containsKey(curFile)) {
                               scrollPositions[curFile] = Offset.zero;
                             }
@@ -237,41 +255,45 @@ class _EditorState extends State<Editor> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     Expanded(child: LayoutBuilder(builder: (context, constraints) {
-                      return Listener(
-                        onPointerDown: (evt) {
-                          _handlePointerPositionEvent(context, evt);
-                        },
-                        onPointerSignal: (signal) {
-                          if (signal is PointerScrollEvent) {
-                            final file = Project.of(context).openFiles[curFile];
-                            var maxLen = 0;
-                            for (final len in file.lineLengths) {
-                              if (len > maxLen) maxLen = len;
+                      return MouseRegion(
+                        cursor: SystemMouseCursors.text,
+                        opaque: false,
+                        child: Listener(
+                          onPointerDown: (evt) {
+                            _handlePointerPositionEvent(context, evt);
+                          },
+                          onPointerSignal: (signal) {
+                            if (signal is PointerScrollEvent) {
+                              final file = Project.of(context).openFiles[curFile];
+                              var maxLen = 0;
+                              for (final len in file.lineLengths) {
+                                if (len > maxLen) maxLen = len;
+                              }
+                              final c = Editor.editorSize.width - 45 - (maxLen * 8.2);
+                              setState(() {
+                                scrollPositions[curFile] += signal.scrollDelta;
+                                scrollPositions[curFile] = Offset(
+                                    max(0, min(-c, scrollPositions[curFile].dx)),
+                                    min(max(0, scrollPositions[curFile].dy),
+                                        max(0, 16.0 * lines.length - constraints.maxHeight + 10.0)));
+                              });
                             }
-                            final c = Editor.editorSize.width - (maxLen * 8.6);
-                            setState(() {
-                              scrollPositions[curFile] += signal.scrollDelta;
-                              scrollPositions[curFile] = Offset(
-                                  max(0, min(-c, scrollPositions[curFile].dx)),
-                                  min(max(0, scrollPositions[curFile].dy),
-                                      max(0, 16.0 * lines.length - constraints.maxHeight + 10.0)));
-                            });
-                          }
-                        },
-                        onPointerMove: (evt) {
-                          _handlePointerPositionEvent(context, evt);
-                        },
-                        child: ClipRect(
-                          clipBehavior: Clip.antiAlias,
-                          child: CustomPaint(
-                            child: ListView(),
-                            painter: EditorUi(-(scrollPositions[curFile] ?? Offset.zero),
-                                theme: testTheme,
-                                lines: lines,
-                                lineHeight: 16.0,
-                                callback: () {},
-                                cursor: cursors[curFile],
-                                cursorBlink: _focusNode.hasFocus && cursorBlink),
+                          },
+                          onPointerMove: (evt) {
+                            _handlePointerPositionEvent(context, evt);
+                          },
+                          child: ClipRect(
+                            clipBehavior: Clip.antiAlias,
+                            child: CustomPaint(
+                              child: ListView(),
+                              painter: EditorUi(-(scrollPositions[curFile] ?? Offset.zero),
+                                  theme: testTheme,
+                                  lines: lines,
+                                  lineHeight: 16.0,
+                                  callback: () {},
+                                  cursor: cursors[curFile],
+                                  cursorBlink: _focusNode.hasFocus && cursorBlink),
+                            ),
                           ),
                         ),
                       );
@@ -537,7 +559,7 @@ class _EditorState extends State<Editor> {
     didUpdateDoc = true;
     MenuBarManager()
       ..updateItem(MenuCategory.edit, 'undo', 'undo', enabled: true)
-      ..updateItem(MenuCategory.file, 'save', 'save', enabled: true)
+      ..updateItem(MenuCategory.file, 'save', 'save', enabled: true, action: saveCurrentFile)
       ..publish();
   }
 
@@ -550,5 +572,6 @@ class _EditorState extends State<Editor> {
   void dispose() {
     super.dispose();
     gestureDelegator.close();
+    _changeActiveFileSubscription.cancel();
   }
 }

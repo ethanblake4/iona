@@ -14,3 +14,27 @@ class WindowResizeEvent {
 
   WindowResizeEvent(this.selector, this.size);
 }
+
+class MakeEditorFileActive {
+  final String file;
+
+  MakeEditorFileActive(this.file);
+}
+
+class SaveFile {
+  final String file;
+  final bool activeFile;
+
+  SaveFile(this.file, this.activeFile);
+}
+
+class EditorFileActiveEvent {
+  final String file;
+
+  EditorFileActiveEvent(this.file);
+
+  @override
+  String toString() {
+    return 'EditorFileActiveEvent{file: $file}';
+  }
+}

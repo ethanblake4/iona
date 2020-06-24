@@ -82,7 +82,18 @@ EditorTheme testTheme = EditorTheme(
         'support': Colors.yellow[200],
         'entity': Color(0xFFAAE8FF),
         'storage': Colors.purple[100],
-        'comment': Colors.blueGrey[100]
+        'comment': Colors.blueGrey[100],
+      }),
+      'yaml': LanguageTheme({
+        'keyword': Colors.pink[100],
+        'string': Colors.lightGreenAccent[100],
+        'constant': Colors.orange[200],
+        'support': Colors.yellow[200],
+        'entity': Color(0xFFAAE8FF),
+        'storage': Colors.purple[100],
+        'comment': Colors.blueGrey[100],
+        'meta': Colors.orange[100],
+        'punctuation': Colors.limeAccent[100]
       })
     });
 
