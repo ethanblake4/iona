@@ -7,6 +7,13 @@ class AnalysisMessage {
   AnalysisMessage(this.type, this.content);
 }
 
+class FileOverlay {
+  String path;
+  String content;
+
+  FileOverlay(this.path, this.content);
+}
+
 class FlutterFileInfo {
   List<FlutterWidgetInfo> widgets;
 

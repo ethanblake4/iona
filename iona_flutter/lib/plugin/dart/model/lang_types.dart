@@ -99,13 +99,96 @@ class DartInstanceCreationExpression extends DartExpression {
     final resolvedNamedParams = <String, dynamic>{};
     namedParameters.forEach((key, value) {
       resolvedNamedParams[key] = value.eval(scope).value;
+      //print(key);
+      //print(value);
+      //print('key: ${resolvedNamedParams[key]}');
     });
+    //print(this);
     return scope.lookupResolved(constructorLocation)(
         positionalParameters.map((e) => e.eval(scope).value).toList(), resolvedNamedParams);
   }
 }
 
-class DartSimpleStringLiteral extends DartExpression {
+class DartFunctionExpression extends DartExpression {
+  DartFunctionExpression(int offset) : super(offset);
+
+  @override
+  DartEvalType eval(DartScope scope) {
+    return DartEvalTypeGeneric(() {});
+  }
+
+  @override
+  String toString() {
+    return 'FnEx{}';
+  }
+}
+
+class DartIndexExpression extends DartExpression {
+  DartIndexExpression(int offset, {this.target, this.indexer}) : super(offset);
+
+  DartExpression target;
+  DartExpression indexer;
+
+  @override
+  DartEvalType eval(DartScope scope) {
+    return DartEvalTypeGeneric(target.eval(scope).value[indexer.eval(scope).value]);
+  }
+
+  @override
+  String toString() {
+    return 'idx ($target)[indexer: $indexer]';
+  }
+}
+
+abstract class DartIdentifier extends DartSourceNode implements DartExpression {
+  const DartIdentifier(int offset, {this.name}) : super(offset);
+
+  final String name;
+}
+
+class DartSimpleIdentifier extends DartIdentifier {
+  const DartSimpleIdentifier(int offset, {String name, this.location}) : super(offset, name: name);
+
+  final String location;
+
+  @override
+  DartEvalType eval(DartScope scope) {
+    return scope.lookup(name) ?? scope.lookupResolvedStatic(location);
+  }
+
+  @override
+  String toString() {
+    return 'SimpleID{$location}';
+  }
+}
+
+class DartPrefixedIdentifier extends DartIdentifier {
+  const DartPrefixedIdentifier(int offset, {this.prefix, this.location, String name}) : super(offset, name: name);
+
+  final DartSimpleIdentifier prefix;
+  final String location;
+
+  @override
+  DartEvalType eval(DartScope scope) {
+    final prefixRes = prefix.eval(scope);
+    if (prefixRes is DartEvalKnownMap) {
+      return DartEvalTypeGeneric(prefixRes.value[name]);
+    } else {
+      return null;
+    }
+  }
+
+  @override
+  String toString() {
+    return 'Pfx{$prefix."$name"}';
+  }
+}
+
+abstract class DartLiteral extends DartSourceNode implements DartExpression {
+  const DartLiteral(int offset) : super(offset);
+}
+
+class DartSimpleStringLiteral extends DartLiteral {
   final String value;
 
   DartSimpleStringLiteral(int offset, {this.value}) : super(offset);
@@ -116,7 +199,7 @@ class DartSimpleStringLiteral extends DartExpression {
   }
 }
 
-class DartListLiteral extends DartExpression {
+class DartListLiteral extends DartLiteral {
   final List<DartExpression> value;
 
   DartListLiteral(int offset, {this.value}) : super(offset);
@@ -124,6 +207,41 @@ class DartListLiteral extends DartExpression {
   @override
   DartEvalType eval(DartScope scope) {
     return DartEvalTypeList(value.map((e) => e.eval(scope).value).toList());
+  }
+
+  @override
+  String toString() {
+    return 'll$value';
+  }
+}
+
+class DartIntegerLiteral extends DartLiteral {
+  DartIntegerLiteral(int offset, {this.value}) : super(offset);
+
+  final int value;
+
+  DartEvalType eval(DartScope scope) {
+    return DartEvalTypeInt(value);
+  }
+
+  @override
+  String toString() {
+    return 'i$value';
+  }
+}
+
+class DartDoubleLiteral extends DartLiteral {
+  DartDoubleLiteral(int offset, {this.value}) : super(offset);
+
+  final double value;
+
+  DartEvalType eval(DartScope scope) {
+    return DartEvalTypeDouble(value);
+  }
+
+  @override
+  String toString() {
+    return 'd$value';
   }
 }
 

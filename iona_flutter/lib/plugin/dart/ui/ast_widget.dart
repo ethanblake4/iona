@@ -17,12 +17,16 @@ class _AstWidgetState extends State<AstWidget> {
     if (widget.astRoot == null) {
       return Text("No widget");
     }
-    final wid = widget.astRoot.build.body.child.eval(scope);
-    if (wid is DartEvalTypeGeneric && wid.value is Widget) {
-      return wid.value;
-    } else {
-      print(wid);
-      return Text("Render fail");
+    try {
+      final wid = widget.astRoot.build.body.child.eval(scope);
+      if (wid is DartEvalTypeGeneric && wid.value is Widget) {
+        return wid.value;
+      } else {
+        print(wid);
+        return Text("Render fail");
+      }
+    } catch (e) {
+      return Text("Render error");
     }
   }
 }

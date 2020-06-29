@@ -16,6 +16,10 @@ class DartScope {
     return scopeDefines[name] ?? parent?.lookup(name);
   }
 
+  DartEvalType lookupResolvedStatic(String resolved) {
+    return knownStaticTypeMap[resolved];
+  }
+
   KnownFunction lookupResolved(String resolved) {
     return knownTypeMap[resolved];
   }
@@ -23,6 +27,12 @@ class DartScope {
 
 abstract class DartEvalType {
   dynamic get value;
+}
+
+class DartEvalKnownMap implements DartEvalType {
+  final Map value;
+
+  DartEvalKnownMap(this.value);
 }
 
 class DartEvalTypeGeneric implements DartEvalType {
@@ -35,6 +45,18 @@ class DartEvalTypeString implements DartEvalType {
   final String value;
 
   DartEvalTypeString(this.value);
+}
+
+class DartEvalTypeInt implements DartEvalType {
+  final int value;
+
+  DartEvalTypeInt(this.value);
+}
+
+class DartEvalTypeDouble implements DartEvalType {
+  final double value;
+
+  DartEvalTypeDouble(this.value);
 }
 
 class DartEvalTypeList implements DartEvalType {

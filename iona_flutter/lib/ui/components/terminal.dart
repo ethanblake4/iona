@@ -30,25 +30,34 @@ class _TerminalState extends State<Terminal> {
   int width = 110;
   int height = 15;
   Array2D chars;
-  List<List<VTIScreenCell>> sbFrames;
+  static List<List<VTIScreenCell>> sbFrames;
   bool rd = false;
 
   StreamSubscription<String> data;
   StreamSubscription<String> err;
-  ScrollController controller = ScrollController();
-  int maxRow = 0;
-  int frameOffsetX = 0;
-  int frameOffsetY = 0;
+  static ScrollController controller = ScrollController();
+  static int maxRow = 0;
+  static int frameOffsetX = 0;
+  static int frameOffsetY = 0;
+  static bool firstInit = true;
 
   @override
   void initState() {
     super.initState();
     chars = Array2D<String>(width, height);
-    sbFrames = <List<VTIScreenCell>>[]..length = height;
-    for (var i = 0; i < height; i++) {
-      sbFrames[i] = <VTIScreenCell>[]..length = width;
+    if (sbFrames == null) {
+      print('sbFrames null :(');
+      sbFrames = <List<VTIScreenCell>>[]..length = height;
+      for (var i = 0; i < height; i++) {
+        sbFrames[i] = <VTIScreenCell>[]..length = width;
+      }
     }
     if (widget.active) init();
+    if (firstInit) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        firstInit = false;
+      });
+    }
   }
 
   void init() async {
@@ -153,6 +162,7 @@ class _TerminalState extends State<Terminal> {
   @override
   Widget build(BuildContext context) {
     return InlineWindow(
+        requestFocus: !firstInit,
         constraints: BoxConstraints.tightFor(height: 230),
         onKey: (k) {
           final d = rawKeyToKeyData(k);

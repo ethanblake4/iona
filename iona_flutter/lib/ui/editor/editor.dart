@@ -10,6 +10,8 @@ import 'package:iona_flutter/model/event/global_events.dart';
 import 'package:iona_flutter/model/ide/ide_theme.dart';
 import 'package:iona_flutter/model/ide/project.dart';
 import 'package:iona_flutter/model/syntax/syntax_definition.dart';
+import 'package:iona_flutter/plugin/dart/completion/protocol/protocol_generated.dart' show CompletionItem;
+import 'package:iona_flutter/plugin/dart/dart_analysis.dart';
 import 'package:iona_flutter/ui/design/custom_iconbutton.dart';
 import 'package:iona_flutter/ui/editor/util/compose.dart';
 import 'package:iona_flutter/util/ot/atext_changeset.dart';
@@ -24,6 +26,7 @@ import 'util/syntax_highlighter.dart';
 /// Provides edit functionality
 class Editor extends StatefulWidget {
   static Size editorSize = Size.zero;
+  static Offset cursorScreenPosition = Offset.zero;
 
   @override
   _EditorState createState() => _EditorState();
@@ -44,18 +47,23 @@ class _EditorState extends State<Editor> {
   Map<String, int> undoPosition = {};
   Map<String, List<List<int>>> prevLineLengths = {};
   Map<String, List<int>> currentChangeLineLength = {};
+  bool didComplete = false;
   var hasMovedCursor = false;
   var wasBackspacing = false;
   var didUndo = false;
   var find = 0;
   var displayedDoc = '';
   var activePointerDrag = -1;
+  var suggestionStartDx = 0.0;
+  int completeLen = 0;
 
   final List<SyntaxDefinition> syntaxes = [];
   SyntaxDefinition currentSyntax;
 
   List<EditorUiLine> lines = [];
   StreamSubscription _changeActiveFileSubscription;
+
+  List<CompletionItem> completions = [];
 
   @override
   void initState() {
@@ -224,6 +232,7 @@ class _EditorState extends State<Editor> {
                                   Project.of(context).closeFile(file.fileLocation);
                                   if (curFile == file.fileLocation) {
                                     curFile = openFiles.values.toList()[find - 1].fileLocation;
+                                    eventBus.fire(EditorFileActiveEvent(curFile));
                                   }
                                 },
                               ),
@@ -259,6 +268,7 @@ class _EditorState extends State<Editor> {
                         cursor: SystemMouseCursors.text,
                         opaque: false,
                         child: Listener(
+                          behavior: HitTestBehavior.opaque,
                           onPointerDown: (evt) {
                             _handlePointerPositionEvent(context, evt);
                           },
@@ -285,7 +295,10 @@ class _EditorState extends State<Editor> {
                           child: ClipRect(
                             clipBehavior: Clip.antiAlias,
                             child: CustomPaint(
-                              child: ListView(),
+                              child: Completions(
+                                completions: completions,
+                                suggestionStartDx: suggestionStartDx,
+                              ),
                               painter: EditorUi(-(scrollPositions[curFile] ?? Offset.zero),
                                   theme: testTheme,
                                   lines: lines,
@@ -314,6 +327,7 @@ class _EditorState extends State<Editor> {
     final newCursor = EditorCursorUtil.calcNewCursor(event, lines, testTheme, -scrollPositions[curFile].dy,
         -scrollPositions[curFile].dx, 16.0, local.translate(-45, -5));
     setState(() {
+      completions = [];
       cursors[curFile] = newCursor;
       hasMovedCursor = true;
       cursorBlink = true;
@@ -473,6 +487,8 @@ class _EditorState extends State<Editor> {
               Changeset ec;
               final cs = beginChange(file);
 
+              var shouldComplete = false;
+
               if (keyCode == 51) {
                 // Backspace
                 if (cur.isSelection) {
@@ -506,6 +522,7 @@ class _EditorState extends State<Editor> {
                 } else {
                   composeStartRelativeToCursor(file, cur, cs, 0);
                   cs.insert(data.characters);
+                  shouldComplete = true;
                 }
                 file.lineLengths[cur.firstLine] += data.characters.length;
                 ec = finishCs(file, cs, cur);
@@ -516,6 +533,10 @@ class _EditorState extends State<Editor> {
                   wasBackspacing = true;
                   hasMovedCursor = true;
                 }
+                completeLen--;
+                if (completeLen <= 0) {
+                  completions = [];
+                }
               } else if (wasBackspacing) {
                 wasBackspacing = false;
                 hasMovedCursor = true;
@@ -523,6 +544,24 @@ class _EditorState extends State<Editor> {
               if (ec != null) {
                 updateDoc(ec);
               }
+
+              if (hasMovedCursor) {
+                completions = [];
+              }
+
+              if (shouldComplete && curFile.endsWith('.dart')) {
+                codeComplete(data.characters);
+
+                if (!didComplete) {
+                  suggestionStartDx = Editor.cursorScreenPosition.dx;
+                  completeLen = 0;
+                }
+                completeLen++;
+                didComplete = true;
+              } else if (keyCode != 51) {
+                completions = [];
+              }
+
               updateMenus(cursors[curFile]);
             }
           });
@@ -545,6 +584,14 @@ class _EditorState extends State<Editor> {
     cursors[curFile] = cur.copyWithSingle(line: np.line, position: np.ch);
     prevLineLengths[curFile].add(currentChangeLineLength[curFile]);
     return ec;
+  }
+
+  void codeComplete(String triggerChar) async {
+    final _completions = await DartAnalyzer()
+        .completeChar(triggerChar, curFile, cursors[curFile].firstLine, cursors[curFile].firstPosition);
+    setState(() {
+      completions = _completions;
+    });
   }
 
   void updateDoc(Changeset ec) {
@@ -573,5 +620,56 @@ class _EditorState extends State<Editor> {
     super.dispose();
     gestureDelegator.close();
     _changeActiveFileSubscription.cancel();
+  }
+}
+
+class Completions extends StatelessWidget {
+  const Completions({Key key, @required this.completions, this.suggestionStartDx}) : super(key: key);
+
+  final List<CompletionItem> completions;
+  final double suggestionStartDx;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(children: [
+      Padding(
+        padding: EdgeInsets.only(left: max(0, suggestionStartDx - 8), top: max(0, Editor.cursorScreenPosition.dy)),
+        child: Container(
+            constraints: BoxConstraints.loose(Size(240, 120)),
+            child: Listener(
+              onPointerDown: (evt) {
+                print('sugest tap');
+              },
+              behavior: HitTestBehavior.opaque,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                opaque: true,
+                child: Material(
+                  elevation: 4,
+                  color: Colors.blueGrey[800],
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemBuilder: (ctx, i) {
+                      return InkWell(
+                        onTap: () {},
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          child: Text(
+                            completions[i].label,
+                            style: testTheme.baseStyle.copyWith(color: Colors.white70, fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: false,
+                            maxLines: 1,
+                          ),
+                        ),
+                      );
+                    },
+                    itemCount: completions?.length ?? 0,
+                  ),
+                ),
+              ),
+            )),
+      ),
+    ]);
   }
 }

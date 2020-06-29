@@ -181,7 +181,7 @@ class StandardSyntaxHighlighter implements SyntaxHighlighter {
       //print(frags.last);
       outLines.add(EditorUiLine(frags));
     }
-    print('timestamp ${DateTime.now().millisecondsSinceEpoch - dt}, $ct');
+    //print('timestamp ${DateTime.now().millisecondsSinceEpoch - dt}, $ct');
     return outLines;
   }
 

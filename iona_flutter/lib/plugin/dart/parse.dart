@@ -52,15 +52,46 @@ DartExpression parseExpression(Expression expression) {
         constructorLocation: expression.constructorName.staticElement.location.encoding,
         positionalParameters: positionalParameters,
         namedParameters: namedParameters);
-  } else if (expression is SimpleStringLiteral) {
-    return DartSimpleStringLiteral(expression.offset, value: expression.value);
-  } else if (expression is ListLiteral) {
-    return DartListLiteral(expression.offset,
-        value: expression.elements.where((element) => element is Expression).map((e) => parseExpression(e)).toList());
+  } else if (expression is FunctionExpression) {
+    return DartFunctionExpression(expression.offset);
+  } else if (expression is IndexExpression) {
+    return DartIndexExpression(expression.offset,
+        target: parseExpression(expression.target), indexer: parseExpression(expression.index));
+  } else if (expression is Identifier) {
+    return parseIdentifier(expression);
+  } else if (expression is Literal) {
+    return parseLiteral(expression);
   } else {
     print("${expression.runtimeType} ${expression}");
   }
   ;
+  return null;
+}
+
+DartLiteral parseLiteral(Literal literal) {
+  if (literal is SimpleStringLiteral) {
+    return DartSimpleStringLiteral(literal.offset, value: literal.value);
+  } else if (literal is ListLiteral) {
+    return DartListLiteral(literal.offset,
+        value: literal.elements.where((element) => element is Expression).map((e) => parseExpression(e)).toList());
+  } else if (literal is IntegerLiteral) {
+    return DartIntegerLiteral(literal.offset, value: literal.value);
+  } else if (literal is DoubleLiteral) {
+    return DartDoubleLiteral(literal.offset, value: literal.value);
+  }
+}
+
+DartIdentifier parseIdentifier(Identifier identifier) {
+  if (identifier is SimpleIdentifier) {
+    print(identifier.staticElement.location);
+    return DartSimpleIdentifier(identifier.offset,
+        name: identifier.name, location: identifier.staticElement.location.encoding);
+  } else if (identifier is PrefixedIdentifier) {
+    return DartPrefixedIdentifier(identifier.offset,
+        prefix: parseIdentifier(identifier.prefix),
+        location: identifier.staticElement.location.encoding,
+        name: identifier.identifier.name);
+  }
   return null;
 }
 

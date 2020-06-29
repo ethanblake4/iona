@@ -1,12 +1,15 @@
 import 'dart:io';
 
+import 'package:devtools_app/devtools.dart';
 import 'package:file_chooser/file_chooser.dart' as file_chooser;
 import 'package:flutter/foundation.dart' show debugDefaultTargetPlatformOverride;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:iona_flutter/model/ide/tasks.dart';
 import 'package:iona_flutter/plugin/dart/dart_analysis.dart';
 import 'package:iona_flutter/plugin/dart/flutter_ui_editor.dart';
+import 'package:iona_flutter/ui/components/action_bar.dart';
 import 'package:scoped_model/scoped_model.dart';
 
 import 'model/ide/ide_theme.dart';
@@ -42,6 +45,7 @@ class IonaApp extends StatefulWidget {
 class _IonaAppState extends State<IonaApp> {
   final _projectModel = Project();
   final _themeModel = IdeTheme();
+  final _tasksModel = Tasks();
 
   @override
   void initState() {
@@ -53,23 +57,33 @@ class _IonaAppState extends State<IonaApp> {
     return ScopedModel(
         model: _projectModel,
         child: ScopedModel(
-          model: _themeModel,
-          child: ScopedModelDescendant<IdeTheme>(builder: (context, widget, model) {
-            return MaterialApp(
-              theme: ThemeData(
-                  primarySwatch: Colors.blue,
-                  iconTheme: IconThemeData(color: IdeTheme.of(context).text.col),
-                  fontFamily: 'Roboto',
-                  textTheme: TextTheme(
-                    bodyText2: TextStyle(color: IdeTheme.of(context).text.col, fontSize: 12.0),
-                    bodyText1: TextStyle(color: IdeTheme.of(context).textActive.col, fontSize: 12.0),
-                  )),
-              home: IonaHome(title: 'Iona'),
-              shortcuts: const {
-                /* ...WidgetsApp.defaultShortcuts */
-              },
-            );
-          }),
+          model: _tasksModel,
+          child: ScopedModel(
+            model: _themeModel,
+            child: ScopedModelDescendant<IdeTheme>(builder: (context, widget, model) {
+              return MaterialApp(
+                debugShowCheckedModeBanner: false,
+                theme: ThemeData(
+                    colorScheme: ColorScheme.dark(surface: Colors.blueGrey, background: Colors.blueGrey),
+                    brightness: Brightness.dark,
+                    scaffoldBackgroundColor: Color(0xFF37434F),
+                    primarySwatch: Colors.blue,
+                    iconTheme: IconThemeData(color: IdeTheme.of(context).text.col),
+                    fontFamily: 'Roboto',
+                    textTheme: TextTheme(
+                      bodyText2: TextStyle(color: IdeTheme.of(context).text.col, fontSize: 12.0),
+                      bodyText1: TextStyle(color: IdeTheme.of(context).textActive.col, fontSize: 12.0),
+                    )),
+                builder: (context, child) => Notifications(
+                  child: child,
+                ),
+                home: IonaHome(title: 'Iona'),
+                shortcuts: const {
+                  /* ...WidgetsApp.defaultShortcuts */
+                },
+              );
+            }),
+          ),
         ));
   }
 }
@@ -82,18 +96,6 @@ class IonaHome extends StatefulWidget {
 
   @override
   _IonaHomeState createState() => _IonaHomeState();
-}
-
-class CoolWidget extends StatefulWidget {
-  @override
-  _CoolWidgetState createState() => _CoolWidgetState();
-}
-
-class _CoolWidgetState extends State<CoolWidget> {
-  @override
-  Widget build(BuildContext context) {
-    return Container(child: Text("Hello"));
-  }
 }
 
 class _IonaHomeState extends State<IonaHome> {
@@ -116,8 +118,9 @@ class _IonaHomeState extends State<IonaHome> {
     return LayoutBuilder(
       builder: (context, constraints) {
         return Column(children: [
+          ActionBar(),
           ConstrainedBox(
-            constraints: BoxConstraints.tightFor(height: constraints.maxHeight - termExtentY),
+            constraints: BoxConstraints.tightFor(height: constraints.maxHeight - termExtentY - 26),
             child: Row(
               mainAxisSize: MainAxisSize.max,
               children: <Widget>[
@@ -125,7 +128,7 @@ class _IonaHomeState extends State<IonaHome> {
                 Expanded(
                   child: ConstrainedBox(
                     child: Editor(),
-                    constraints: BoxConstraints.tightFor(height: constraints.maxHeight),
+                    constraints: BoxConstraints.tightFor(height: constraints.maxHeight - termExtentY - 26),
                   ),
                 ),
                 FlutterUiEditor(),
@@ -165,7 +168,7 @@ class _IonaHomeState extends State<IonaHome> {
                 .showOpenPanel(canSelectDirectories: true, allowedFileTypes: [], confirmButtonText: 'Open')
                 .then((res) {
               if (!res.canceled && res.paths.isNotEmpty) Project.of(context).rootFolder = res.paths.first;
-              DartAnalyzer().maybeAnalyzeRootFolder(res.paths.first);
+              if (DartAnalyzer().maybeAnalyzeRootFolder(context, res.paths.first)) ;
             });
           }, shortcut: LogicalKeySet(opKey, LogicalKeyboardKey.keyO)))
       ..setItem(

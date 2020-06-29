@@ -4,8 +4,14 @@ import 'dart:isolate';
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/file_system/file_system.dart';
 import 'package:analyzer/file_system/physical_file_system.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:iona_flutter/model/ide/tasks.dart';
+import 'package:iona_flutter/plugin/dart/completion/protocol/protocol_generated.dart';
 import 'package:iona_flutter/plugin/dart/dart_analysis_engine.dart';
 import 'package:iona_flutter/plugin/dart/model/analysis_message.dart';
+import 'package:iona_flutter/plugin/dart/tasks/dart_tasks.dart';
+
+import 'completion/protocol/protocol_special.dart';
 
 class DartAnalyzer {
   static DartAnalyzer _instance;
@@ -27,16 +33,16 @@ class DartAnalyzer {
   SendPort _sendPort;
   String currentRootFolder;
 
-  bool maybeAnalyzeRootFolder(String path) {
+  bool maybeAnalyzeRootFolder(BuildContext context, String path) {
     if (_sendPort != null && resourceProvider.getFolder(path).getChildAssumingFile('pubspec.yaml').exists) {
-      print('analyze!');
+      Tasks.of(context).setTask(DartAnalyzeTask(true));
       final response = ReceivePort();
       _sendPort.send([AnalysisMessage('setRootFolder', path), response.sendPort]);
-      response.first.then((value) => {print('response: ${value.content}')});
+      response.first.then((value) => {Tasks.of(context).setTask(DartAnalyzeTask(false))});
       currentRootFolder = path;
-    } else {
-      print('no!');
+      return true;
     }
+    return false;
   }
 
   Future<FlutterFileInfo> flutterFileInfo(String path) async {
@@ -49,9 +55,37 @@ class DartAnalyzer {
       final nts = DateTime.now().millisecondsSinceEpoch;
       print('time: ${nts - ts}');
       print('response: ${value.content}');
+
       // ignore: avoid_as
       return value.content as FlutterFileInfo;
     }
+  }
+
+  Future<bool> editFile(String path, String content) async {
+    if (_sendPort != null) {
+      final response = ReceivePort();
+      _sendPort.send([AnalysisMessage('overlay', FileOverlay(path, content)), response.sendPort]);
+      final value = (((await response.first) as AnalysisMessage).content as bool);
+      if (value == true) return true;
+      return false;
+    }
+  }
+
+  Future<List<CompletionItem>> completeChar(String char, String file, int line, int offset) async {
+    if (!DartAnalysisEngine.isDartFileName(file)) return null;
+    final params = CompletionParams(CompletionContext(CompletionTriggerKind.TriggerCharacter, char),
+        TextDocumentIdentifier(Uri.file(file).toString()), Position(line, offset));
+    if (_sendPort != null) {
+      final response = ReceivePort();
+      _sendPort.send([AnalysisMessage('complete', params), response.sendPort]);
+      final value = ((await response.first) as AnalysisMessage).content as ErrorOr<List<CompletionItem>>;
+      if (value.isError) {
+        print(value.error);
+      } else {
+        return value.result;
+      }
+    }
+    return null;
   }
 
   void analyzeFileDart(String path) {

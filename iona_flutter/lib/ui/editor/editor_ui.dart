@@ -106,6 +106,7 @@ class EditorUi extends CustomPainter {
         final o =
             painter.getOffsetForCaret(TextPosition(offset: cursor.endPosition), Rect.fromLTWH(0, 0, 2, lineHeight));
         canvas.drawRect(Rect.fromLTWH(offsetXPos + o.dx, o.dy + scroll.dy + offsetYPos, 2, lineHeight), cursorPaint);
+        Editor.cursorScreenPosition = Offset(offsetXPos + o.dx, o.dy + scroll.dy + offsetYPos + lineHeight);
       }
 
       if (theme.showLineNumbers) {

@@ -5,10 +5,12 @@ class InlineWindow extends StatefulWidget {
   Widget child;
   Widget header;
   BoxConstraints constraints;
+  bool requestFocus;
 
   Function(RawKeyEvent) onKey;
 
-  InlineWindow({Key key, this.child, this.header, this.onKey, this.constraints}) : super(key: key);
+  InlineWindow({Key key, this.child, this.header, this.onKey, this.constraints, this.requestFocus = false})
+      : super(key: key);
 
   @override
   InlineWindowState createState() => new InlineWindowState();
@@ -27,6 +29,9 @@ class InlineWindowState extends State<InlineWindow> {
     _focusNode.addListener(() {
       setState(() {});
     });
+    if (widget.requestFocus) {
+      _focusNode.requestFocus();
+    }
   }
 
   bool get hasFocus => _focusNode.hasFocus;
