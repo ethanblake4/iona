@@ -112,8 +112,6 @@ class DartFieldDeclaration extends DartDeclaration {
   void declare(DeclarationContext ctx) {
     // TODO: implement declare
   }
-
-
 }
 
 class DartVariableDeclaration extends DartDeclaration {
