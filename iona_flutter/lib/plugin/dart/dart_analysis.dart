@@ -47,14 +47,13 @@ class DartAnalyzer {
 
   Future<FlutterFileInfo> flutterFileInfo(String path) async {
     if (_sendPort != null) {
-      print('info!');
       final response = ReceivePort();
       final ts = DateTime.now().millisecondsSinceEpoch;
       _sendPort.send([AnalysisMessage('resolvedUnitInfo', path), response.sendPort]);
       final value = await response.first;
       final nts = DateTime.now().millisecondsSinceEpoch;
-      print('time: ${nts - ts}');
-      print('response: ${value.content}');
+      print('flutter file info (time=${nts - ts}ms)');
+      //print('response: ${value.content}');
 
       // ignore: avoid_as
       return value.content as FlutterFileInfo;
@@ -81,6 +80,7 @@ class DartAnalyzer {
       final value = ((await response.first) as AnalysisMessage).content as ErrorOr<List<CompletionItem>>;
       if (value.isError) {
         print(value.error);
+        return null;
       } else {
         return value.result;
       }

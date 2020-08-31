@@ -2,12 +2,13 @@ name: iona_flutter
 description: A code editor built in Flutter.
 
 environment:
-  sdk: '>=2.9.0-18.0.dev <3.0.0'
-  flutter: '>=1.17.0'
+  sdk: '>=2.9.0 <3.0.0'
+  flutter: '>=1.20.0'
 
 dependencies:
   flutter:
     sdk: flutter
+  dartx:
   analysis_server_lib:
   built_value:
   built_collection:
@@ -19,15 +20,20 @@ dependencies:
   isolate:
   yaml:
   equatable:
+  dart_style:
   piecemeal: any
   cupertino_icons: ^0.1.0
   analyzer_plugin:
   analyzer:
   selection_menu: ^0.9.0
+  catex:
+
   ffi_terminal:
     path: /Users/ethanelshyeb/ffi_terminal
   devtools_app:
     path: ../devtools/packages/devtools_app
+  cyclop:
+    path: ../cyclop/
 
 
   # Desktop embedder plugins.
@@ -53,6 +59,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  build_runner:
+  built_value_generator:
 
 flutter:
   uses-material-design: true

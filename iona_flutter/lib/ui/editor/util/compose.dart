@@ -7,9 +7,11 @@ void composeStartRelativeToCursor(ProjectFile file, EditorCursor cur, Builder cs
   final firstPos = cur.firstPosition;
   final startLine = cur.firstLine;
   final less1 = (firstPos + offset) < 0;
-  final lcl = file.lineLengths.take(startLine - (less1 ? 1 : 0)).fold(0, (n, x) => n + x);
+  final lcl = file.lineLengths.take(startLine - (less1 ? -offset : 0)).fold(0, (n, x) => n + x);
 
-  cs..keep(lcl, startLine - (less1 ? 1 : 0))..keep((less1 ? file.lineLengths[startLine - 1] : firstPos) + offset, 0);
+  cs
+    ..keep(lcl, startLine - (less1 ? -offset : 0))
+    ..keep((less1 ? file.lineLengths[startLine - 1] : firstPos) + offset, 0);
 }
 
 /// Delete the currently selected text

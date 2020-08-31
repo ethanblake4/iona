@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:iona_flutter/model/hid/key_codes.dart' as key_codes;
 import 'package:iona_flutter/model/ide/ide_theme.dart';
 import 'package:iona_flutter/ui/design/inline_window.dart';
 import 'package:iona_flutter/util/key_util.dart';
@@ -15,9 +16,12 @@ import 'package:piecemeal/piecemeal.dart';
 
 /// A terminal using ffi_terminal
 class Terminal extends StatefulWidget {
-  const Terminal({this.active = true});
+  const Terminal({this.active = true, this.height = 230, this.constraintsCallback, this.onCollapse});
 
   final bool active;
+  final double height;
+  final ModifyConstraintsCallback constraintsCallback;
+  final VoidCallback onCollapse;
 
   @override
   _TerminalState createState() => _TerminalState();
@@ -31,6 +35,7 @@ class _TerminalState extends State<Terminal> {
   int height = 15;
   Array2D chars;
   static List<List<VTIScreenCell>> sbFrames;
+  static bool isVisible = false;
   bool rd = false;
 
   StreamSubscription<String> data;
@@ -45,6 +50,7 @@ class _TerminalState extends State<Terminal> {
   void initState() {
     super.initState();
     chars = Array2D<String>(width, height);
+    isVisible = true;
     if (sbFrames == null) {
       print('sbFrames null :(');
       sbFrames = <List<VTIScreenCell>>[]..length = height;
@@ -57,6 +63,11 @@ class _TerminalState extends State<Terminal> {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         firstInit = false;
       });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        controller.jumpTo(gse());
+      });
+      WidgetsBinding.instance.scheduleFrame();
     }
   }
 
@@ -73,44 +84,55 @@ class _TerminalState extends State<Terminal> {
 
     if (vterm == null) {
       vterm = VTerm(height, width, '$docsDir/');
-      unawaited(read(400, true));
+      unawaited(read(600, true));
     }
     vterm.callbacks.onReplaceCell = (row, col, cell) {
       while (sbFrames.length < row + frameOffsetY) {
         sbFrames.add(<VTIScreenCell>[]..length = width);
       }
-      setState(() {
+
+      if (isVisible) {
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          setState(() {
+            if (maxRow < row + 1) maxRow = row + 1;
+            //chars.set((col + frameOffsetX) % width, (row + frameOffsetY) % height, cell.content);
+            sbFrames[row + frameOffsetY][col] = cell;
+          });
+        });
+        WidgetsBinding.instance.scheduleFrame();
+      } else {
         if (maxRow < row + 1) maxRow = row + 1;
         //chars.set((col + frameOffsetX) % width, (row + frameOffsetY) % height, cell.content);
         sbFrames[row + frameOffsetY][col] = cell;
-      });
+      }
     };
     vterm.callbacks.onMoveRect = (dest, src) {
-      setState(() {
-        if (controller.offset > controller.position.maxScrollExtent - 2) {
-          //WidgetsBinding.instance.scheduleFrameCallback((_) {
-
-          //});
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            //Future.delayed(const Duration(milliseconds: 24), () {
-            controller.jumpTo(gse());
+      if (isVisible) {
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          setState(() {
+            if (controller.offset > controller.position.maxScrollExtent - 2) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                controller.jumpTo(gse());
+              });
+            }
           });
-        }
-        //frameOffsetX += dest.startCol - src.startCol;
-        //frameOffsetY -= dest.startRow - src.startRow;
-
-        //for (var i = dest.endRow; i < src.endRow; i++) {
-        //  for (var j = 0; j < width; j++) {
-        //    chars.set(j, (i + frameOffsetY) % height, null);
-        //  }
-        //}
-      });
+        });
+        WidgetsBinding.instance.scheduleFrame();
+      }
     };
     vterm.callbacks.onPushScrollbackLine = (cells) {
-      setState(() {
+      if (isVisible) {
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          setState(() {
+            sbFrames.add(<VTIScreenCell>[]..length = width);
+            frameOffsetY++;
+          });
+        });
+        WidgetsBinding.instance.scheduleFrame();
+      } else {
         sbFrames.add(<VTIScreenCell>[]..length = width);
         frameOffsetY++;
-      });
+      }
     };
   }
 
@@ -121,10 +143,14 @@ class _TerminalState extends State<Terminal> {
   // ignore: avoid_positional_boolean_parameters
   Future read(int ms, bool rp) async {
     await Future.delayed(Duration(milliseconds: ms));
-    vterm.masterRead();
+    try {
+      vterm.masterRead();
+    } catch (e) {
+      print(e);
+    }
 
     if (rp) {
-      unawaited(read(50, true));
+      unawaited(read(80, true));
     }
   }
 
@@ -144,6 +170,8 @@ class _TerminalState extends State<Terminal> {
   @override
   void dispose() {
     super.dispose();
+    isVisible = false;
+
     if (data != null) data.cancel();
     if (err != null) err.cancel();
   }
@@ -163,7 +191,10 @@ class _TerminalState extends State<Terminal> {
   Widget build(BuildContext context) {
     return InlineWindow(
         requestFocus: !firstInit,
-        constraints: BoxConstraints.tightFor(height: 230),
+        constraints: BoxConstraints.tightFor(height: widget.height),
+        constraintsCallback: widget.constraintsCallback,
+        onCollapse: widget.onCollapse,
+        resizeTop: true,
         onKey: (k) {
           final d = rawKeyToKeyData(k);
           var mods = VTERM_MOD_NONE;
@@ -177,28 +208,36 @@ class _TerminalState extends State<Terminal> {
             mods |= VTERM_MOD_SHIFT;
           }
           if (d.isKeyDown) {
-            if (d.keyCode == 51) {
-              vterm
-                ..writeKey(VTERM_KEY_BACKSPACE, modifier: mods)
-                ..flushBuf();
-            } else if (d.keyCode == 36) {
-              vterm
-                ..writeKey(VTERM_KEY_ENTER, modifier: mods)
-                ..flushBuf();
-            } else if (d.keyCode == 48) {
-              vterm
-                ..writeKey(VTERM_KEY_TAB, modifier: mods)
-                ..flushBuf();
-            } else if (d.keyCode == 53) {
-              vterm
-                ..writeKey(VTERM_KEY_ESCAPE, modifier: mods)
-                ..flushBuf();
-            } else {
-              vterm
-                ..writeChar(k.logicalKey.keyLabel.codeUnitAt(0), modifier: mods)
-                ..flushBuf();
-              //vterm.writeMaster(d.characters);
+            switch (d.keyCode) {
+              case key_codes.backspace:
+                vterm.writeKey(VTERM_KEY_BACKSPACE, modifier: mods);
+                break;
+              case key_codes.enter:
+                vterm.writeKey(VTERM_KEY_ENTER, modifier: mods);
+                break;
+              case key_codes.tab:
+                vterm.writeKey(VTERM_KEY_TAB, modifier: mods);
+                break;
+              case key_codes.escape:
+                vterm.writeKey(VTERM_KEY_ESCAPE, modifier: mods);
+                break;
+              case key_codes.up:
+                vterm.writeKey(VTERM_KEY_UP, modifier: mods);
+                break;
+              case key_codes.right:
+                vterm.writeKey(VTERM_KEY_RIGHT, modifier: mods);
+                break;
+              case key_codes.left:
+                vterm.writeKey(VTERM_KEY_LEFT, modifier: mods);
+                break;
+              case key_codes.down:
+                vterm.writeKey(VTERM_KEY_DOWN, modifier: mods);
+                break;
+              default:
+                vterm.writeChar(k.logicalKey.keyLabel.codeUnitAt(0), modifier: mods);
+                break;
             }
+            vterm.flushBuf();
             controller.jumpTo(controller.position.maxScrollExtent);
             // vterm.writeMaster(d.characters);
           }

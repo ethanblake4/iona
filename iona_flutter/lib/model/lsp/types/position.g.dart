@@ -15,7 +15,7 @@ class _$PositionSerializer implements StructuredSerializer<Position> {
   final String wireName = 'Position';
 
   @override
-  Iterable serialize(Serializers serializers, Position object,
+  Iterable<Object> serialize(Serializers serializers, Position object,
       {FullType specifiedType = FullType.unspecified}) {
     final result = <Object>[
       'line',
@@ -29,7 +29,7 @@ class _$PositionSerializer implements StructuredSerializer<Position> {
   }
 
   @override
-  Position deserialize(Serializers serializers, Iterable serialized,
+  Position deserialize(Serializers serializers, Iterable<Object> serialized,
       {FullType specifiedType = FullType.unspecified}) {
     final result = new PositionBuilder();
 

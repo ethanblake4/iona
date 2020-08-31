@@ -19,13 +19,14 @@ import 'package:iona_flutter/plugin/dart/completion/completion.dart';
 import 'package:iona_flutter/plugin/dart/completion/domain/available_suggestions.dart';
 import 'package:iona_flutter/plugin/dart/completion/protocol/protocol_generated.dart';
 import 'package:iona_flutter/plugin/dart/completion/protocol/protocol_special.dart';
+import 'package:iona_flutter/plugin/dart/flutter/ui_editor/parse.dart';
 import 'package:iona_flutter/plugin/dart/lsp/constants.dart';
 import 'package:iona_flutter/plugin/dart/model/analysis_message.dart';
 import 'package:iona_flutter/plugin/dart/model/flutter_names.dart';
-import 'package:iona_flutter/plugin/dart/parse.dart';
 import 'package:iona_flutter/plugin/dart/utils/handlers.dart';
+import 'package:pedantic/pedantic.dart';
 
-analysisEngine(SendPort sendPort) async {
+void analysisEngine(SendPort sendPort) async {
   // Open the ReceivePort for incoming messages.
   final port = ReceivePort();
 
@@ -35,8 +36,7 @@ analysisEngine(SendPort sendPort) async {
   await for (final msg in port) {
     AnalysisMessage data = msg[0];
     SendPort replyTo = msg[1];
-    final result = await DartAnalysisEngine().handleMessage(data);
-    replyTo.send(result);
+    unawaited(DartAnalysisEngine().handleMessage(data).then((value) => replyTo.send(value)));
   }
 }
 
@@ -65,6 +65,7 @@ class DartAnalysisEngine {
   AnalysisContextCollection collection;
   ByteStore byteStore;
   String rootFolder;
+  CancelableToken completeToken;
 
   Future<AnalysisMessage> handleMessage(AnalysisMessage message) async {
     switch (message.type) {
@@ -78,7 +79,6 @@ class DartAnalysisEngine {
         break;
       case 'complete':
         final res = await complete(message.content as CompletionParams);
-        print(res?.result?.length);
         return AnalysisMessage('complete.result', res);
         break;
       case 'overlay':
@@ -87,14 +87,21 @@ class DartAnalysisEngine {
         resourceProvider.setOverlay(overlay.path,
             content: overlay.content, modificationStamp: DateTime.now().millisecondsSinceEpoch);
         (collection.contextFor(overlay.path) as DriverBasedAnalysisContext).driver.changeFile(overlay.path);
-        declarationsTracker.changeFile(overlay.path);
+        //declarationsTracker.changeFile(overlay.path);
         return AnalysisMessage('overlay.result', true);
         break;
     }
   }
 
-  Future<ErrorOr<List<CompletionItem>>> complete(CompletionParams params) {
-    return Completion().complete(params, CancelableToken());
+  Future<ErrorOr<List<CompletionItem>>> complete(CompletionParams params) async {
+    completeToken?.cancel();
+    completeToken = CancelableToken();
+    try {
+      return await Completion().complete(params, completeToken);
+      // ignore: avoid_catches_without_on_clauses
+    } catch (e) {
+      return ErrorOr.error(ResponseError(ErrorCodes.InternalError, 'Code completion failed', 'complete'));
+    }
   }
 
   Future<int> setRootFolder(String folder) async {
@@ -125,9 +132,13 @@ class DartAnalysisEngine {
   Future<FlutterFileInfo> resolvedUnitInfo(String file) async {
     if (rootFolder == null) return null;
 
-    (collection.contextFor(file) as DriverBasedAnalysisContext).driver.changeFile(file);
+    final ts = DateTime.now().millisecondsSinceEpoch;
 
     final result = await collection.contextFor(file).currentSession.getResolvedUnit(file);
+
+    final nts = DateTime.now().millisecondsSinceEpoch;
+
+    print('> reanalyze (time=${nts - ts}ms)');
 
     //final libraryContext =
     //    (collection.contextFor('$rootFolder/lib/main.dart') as DriverBasedAnalysisContext).driver.getLibraryContext();
@@ -137,34 +148,45 @@ class DartAnalysisEngine {
     final stful = Map<String, String>();
     List<FlutterWidgetInfo> widgets = [];
 
-    for (final declaration in unit.declarations) {
-      if (declaration is ClassDeclaration) {
-        final clsDef = element.getType(declaration.name.name);
-        if (clsDef == null) continue;
-        final supertypeEl = findWidgetSupertype(clsDef.supertype);
-        if (supertypeEl == null) continue;
-        final superName = supertypeEl.element.name;
+    try {
+      for (final declaration in unit.declarations) {
+        //unit.declarations
+        if (declaration is ClassDeclaration) {
+          final clsDef = element.getType(declaration.name.name);
+          if (clsDef == null) continue;
+          final supertypeEl = findWidgetSupertype(clsDef.supertype);
+          if (supertypeEl == null) continue;
+          final superName = supertypeEl.element.name;
 
-        if (superName == FLUTTER_STATEFUL_WIDGET) {
-          final createState = declaration.members.firstWhere(
-              (element) => element is MethodDeclaration && element.name.name == FLUTTER_STATEFUL_CREATESTATE,
-              orElse: () => null);
-          if (createState == null || createState.declaredElement == null) continue;
+          if (superName == flutterStatefulWidget) {
+            final createState = declaration.members.firstWhere(
+                (element) => element is MethodDeclaration && element.name.name == flutterStatefulCreateState,
+                orElse: () => null);
+            if (createState == null || createState.declaredElement == null) continue;
 
-          stful[createState.childEntities.toList()[1].toString()] = clsDef.name;
-        } else if (superName == FLUTTER_STATE) {
-          FlutterWidgetInfo w = FlutterWidgetInfo();
-          w.type = FlutterWidgetType.STATEFUL;
-          final build = declaration.members.firstWhere(
-              (element) => element is MethodDeclaration && element.name.name == FLUTTER_BUILD,
-              orElse: () => null);
-          w.build = parseBuild(build);
-          if (stful.containsKey(clsDef.name)) {
-            w.name = stful[clsDef.name];
+            stful[createState.childEntities.toList()[1].toString()] = clsDef.name;
+          } else if (superName == flutterState) {
+            FlutterWidgetInfo w = FlutterWidgetInfo();
+
+            w.widgetClass = parseClass(declaration);
+            if (stful.containsKey(clsDef.name)) {
+              w.name = stful[clsDef.name];
+              widgets.add(w);
+            }
+          } else if (superName == flutterStatelessWidget) {
+            FlutterWidgetInfo w = FlutterWidgetInfo();
+            w.widgetClass = parseClass(declaration);
+            w.name = clsDef.name;
             widgets.add(w);
+          } else {
+            print(superName);
           }
         }
       }
+    } catch (e) {
+      print(e);
+
+      return null;
     }
     return FlutterFileInfo(widgets);
   }

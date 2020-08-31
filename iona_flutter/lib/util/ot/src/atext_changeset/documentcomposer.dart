@@ -1,9 +1,9 @@
 part of otdartlib.atext_changeset;
 
 class DocumentComposer extends _ChangesetComposerBase implements OperationComposer<ADocument> {
-  Iterator<Map> _lines;
+  Iterator<Map<String, dynamic>> _lines;
   List _pool;
-  List<Map> _outLines = <Map>[];
+  List<Map<String, dynamic>> _outLines = <Map<String, dynamic>>[];
 
   DocumentComposer(ADocument doc) : super(new Iterable<OpComponent>.empty().iterator, '') {
     _lines = doc.iterator;

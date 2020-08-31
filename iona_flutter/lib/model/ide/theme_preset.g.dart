@@ -15,7 +15,7 @@ class _$ThemePresetSerializer implements StructuredSerializer<ThemePreset> {
   final String wireName = 'ThemePreset';
 
   @override
-  Iterable serialize(Serializers serializers, ThemePreset object,
+  Iterable<Object> serialize(Serializers serializers, ThemePreset object,
       {FullType specifiedType = FullType.unspecified}) {
     final result = <Object>[
       'projectBrowserBackground',
@@ -44,7 +44,7 @@ class _$ThemePresetSerializer implements StructuredSerializer<ThemePreset> {
   }
 
   @override
-  ThemePreset deserialize(Serializers serializers, Iterable serialized,
+  ThemePreset deserialize(Serializers serializers, Iterable<Object> serialized,
       {FullType specifiedType = FullType.unspecified}) {
     final result = new ThemePresetBuilder();
 

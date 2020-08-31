@@ -24,8 +24,6 @@ class Tasks extends Model {
 
   /// Check if task with given [domain] and [name] is running
   bool isRunning(String domain, String name) {
-    print('isRunning');
-    print(taskDomains);
     if (!taskDomains.containsKey(domain)) return false;
     return taskDomains[domain][name]?.isRunning ?? false;
   }

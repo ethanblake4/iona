@@ -97,7 +97,7 @@ class Fractal {
         dx = Float32x4(100.0, 100.0, 100.0, 100.0);
         var i = 0;
 
-        final mask = [false, false, false, false];
+        final mask = [true, true, true, true];
         final tries = [250, 250, 250, 250];
         final col = [0, 0, 0, 0];
         final c2 = [0, 0, 0, 0];

@@ -1,6 +1,6 @@
 part of otdartlib.atext_changeset;
 
-class ADocument extends UnmodifiableListView<Map> implements Clonable {
+class ADocument extends UnmodifiableListView<Map<String, dynamic>> implements Clonable {
   final List pool;
 
   ADocument() : this._([]);
@@ -16,7 +16,7 @@ class ADocument extends UnmodifiableListView<Map> implements Clonable {
     return doc;
   }
 
-  ADocument._(List<Map> lines, [List pool])
+  ADocument._(List<Map<String, dynamic>> lines, [List pool])
       : this.pool = pool ?? [],
         super(lines);
 

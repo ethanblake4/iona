@@ -25,15 +25,16 @@ class FlutterFileInfo {
   }
 }
 
-enum FlutterWidgetType { STATEFUL, STATELESS }
-
 class FlutterWidgetInfo {
   String name;
-  FlutterWidgetType type;
-  DartFunction build;
+  DartClass widgetClass;
 
   @override
   String toString() {
-    return 'FlutterWidgetInfo{name: $name, type: $type, build: $build}';
+    return 'FlutterWidgetInfo{name: $name, class: $widgetClass}';
   }
+}
+
+class FlutterStatefulWidgetInfo extends FlutterWidgetInfo {
+  DartClass stateClass;
 }

@@ -6,17 +6,19 @@ part of 'config_option.dart';
 // BuiltValueGenerator
 // **************************************************************************
 
-Serializer<ConfigOption> _$configOptionSerializer =
+Serializer<ConfigOption<Object>> _$configOptionSerializer =
     new _$ConfigOptionSerializer();
 
-class _$ConfigOptionSerializer implements StructuredSerializer<ConfigOption> {
+class _$ConfigOptionSerializer
+    implements StructuredSerializer<ConfigOption<Object>> {
   @override
   final Iterable<Type> types = const [ConfigOption, _$ConfigOption];
   @override
   final String wireName = 'ConfigOption';
 
   @override
-  Iterable serialize(Serializers serializers, ConfigOption object,
+  Iterable<Object> serialize(
+      Serializers serializers, ConfigOption<Object> object,
       {FullType specifiedType = FullType.unspecified}) {
     final isUnderspecified =
         specifiedType.isUnspecified || specifiedType.parameters.isEmpty;
@@ -38,7 +40,8 @@ class _$ConfigOptionSerializer implements StructuredSerializer<ConfigOption> {
   }
 
   @override
-  ConfigOption deserialize(Serializers serializers, Iterable serialized,
+  ConfigOption<Object> deserialize(
+      Serializers serializers, Iterable<Object> serialized,
       {FullType specifiedType = FullType.unspecified}) {
     final isUnderspecified =
         specifiedType.isUnspecified || specifiedType.parameters.isEmpty;

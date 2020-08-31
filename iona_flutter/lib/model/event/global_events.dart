@@ -28,6 +28,13 @@ class SaveFile {
   SaveFile(this.file, this.activeFile);
 }
 
+class FileContentsChanged {
+  final String file;
+  final bool activeFile;
+
+  FileContentsChanged(this.file, this.activeFile);
+}
+
 class EditorFileActiveEvent {
   final String file;
 

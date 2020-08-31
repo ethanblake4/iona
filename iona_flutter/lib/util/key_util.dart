@@ -21,7 +21,6 @@ KeyData rawKeyToKeyData(RawKeyEvent event) {
   switch (event.runtimeType) {
     case RawKeyDownEvent:
       isKeyDown = true;
-      Future.delayed(const Duration(seconds: 1), () {});
       break;
     case RawKeyUpEvent:
       isKeyDown = false;

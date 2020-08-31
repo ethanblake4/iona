@@ -198,3 +198,11 @@ class StandardSyntaxHighlighter implements SyntaxHighlighter {
     return newContexts;
   }
 }
+
+class DartSyntaxHighlighter implements SyntaxHighlighter {
+  //final ParsedUnitResult result;
+  @override
+  List<EditorUiLine> highlight(List<String> lines) {
+    return [];
+  }
+}

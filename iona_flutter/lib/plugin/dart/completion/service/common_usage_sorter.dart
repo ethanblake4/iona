@@ -19,8 +19,7 @@ import 'package:iona_flutter/plugin/dart/completion/dart/completion_dart.dart';
 import 'package:iona_flutter/plugin/dart/completion/service/contribution_sorter.dart';
 
 import '../protocol/protocol_server.dart' as protocol;
-
-part 'common_usage_sorter.g.dart';
+import 'default_selector_relevance.dart';
 
 /// A computer for adjusting the relevance of completions computed by others
 /// based upon common Dart usage patterns. This is a long-lived object

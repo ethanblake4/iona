@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:iona_flutter/model/event/global_events.dart';
 import 'package:iona_flutter/plugin/dart/dart_analysis.dart';
 import 'package:iona_flutter/util/ot/atext_changeset.dart';
+import 'package:iona_flutter/util/strings/detect_indents.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:sembast/sembast.dart';
 
@@ -14,9 +15,7 @@ class Project extends Model {
   static Project of(BuildContext context) => ScopedModel.of<Project>(context);
 
   String _rootFolder = '';
-
-  /// The root folder of the workspace
-  String get rootFolder => _rootFolder;
+  String _activeFile = '';
 
   /// Open files in the project
   Map<String, ProjectFile> openFiles = {};
@@ -24,8 +23,21 @@ class Project extends Model {
   /// The configuration data for the project
   FutureOr<Database> projectDb;
 
+  /// The root folder of the workspace
+  String get rootFolder => _rootFolder;
+
+  /// The currently active file, eg the one whose editor window was most recently focused
+  String get activeFile => _activeFile;
+
+  ProjectFile get activeProjectFile => openFiles[_activeFile];
+
   set rootFolder(String newRootFolder) {
     _rootFolder = newRootFolder;
+    notifyListeners();
+  }
+
+  set activeFile(String newActiveFile) {
+    _activeFile = newActiveFile;
     notifyListeners();
   }
 
@@ -33,8 +45,15 @@ class Project extends Model {
   void openFile(String filepath) async {
     var file = File(filepath);
     var fstr = await file.readAsString();
+    final isCrlf = fstr.contains('\r\n');
+    if (isCrlf) {
+      fstr = fstr.replaceAll('\r\n', '\n');
+    }
     var doc = ADocument.fromText(fstr + '\n');
-    openFiles[filepath] = ProjectFile(filepath, filepath.substring(filepath.lastIndexOf('/') + 1), file, doc, []);
+    final indents = detectIndents(fstr);
+    openFiles[filepath] = ProjectFile(filepath, filepath.substring(filepath.lastIndexOf('/') + 1), file, doc, [],
+        lineTerminatorFormat: isCrlf ? LineTerminatorFormat.CRLF : LineTerminatorFormat.LF, indentData: indents);
+
     openFiles[filepath].lineLengths = doc.map((line) => (line['s'] as String).length).toList();
     notifyListeners();
     eventBus.fire(MakeEditorFileActive(filepath));
@@ -45,7 +64,7 @@ class Project extends Model {
   void updateFile(String filepath, Changeset changes) {
     openFiles[filepath].document = changes.applyTo(openFiles[filepath].document);
     openFiles[filepath].hasModified = true;
-    DartAnalyzer().editFile(filepath, _adocToString(openFiles[filepath].document)).then((value) {});
+    DartAnalyzer().editFile(filepath, adocToString(openFiles[filepath].document)).then((value) {});
     notifyListeners();
   }
 
@@ -53,7 +72,11 @@ class Project extends Model {
   void saveFile(String filepath) {
     print("save file");
     if (!openFiles[filepath].hasModified) return;
-    openFiles[filepath].file.writeAsStringSync(_adocToString(openFiles[filepath].document));
+    var filestring = adocToString(openFiles[filepath].document);
+    if (openFiles[filepath].lineTerminatorFormat == LineTerminatorFormat.CRLF) {
+      filestring = filestring.replaceAll('\n', '\r\n');
+    }
+    openFiles[filepath].file.writeAsStringSync(filestring);
     openFiles[filepath].hasModified = false;
     notifyListeners();
     eventBus.fire(SaveFile(filepath, true));
@@ -66,12 +89,15 @@ class Project extends Model {
   }
 }
 
-String _adocToString(ADocument doc) {
+String adocToString(ADocument doc) {
   final str = doc.map((line) => (line['s'] as String)).reduce((s1, s2) => s1 + s2);
   return str.substring(0, str.length - 1);
 }
 
 class ProjectFile {
+  ProjectFile(this.fileLocation, this.fileName, this.file, this.document, this.lineLengths,
+      {this.lineTerminatorFormat = LineTerminatorFormat.LF, this.indentData});
+
   /// Location of file on disk
   String fileLocation;
 
@@ -84,11 +110,13 @@ class ProjectFile {
   ADocument document;
   bool hasModified = false;
   List<int> lineLengths;
-
-  ProjectFile(this.fileLocation, this.fileName, this.file, this.document, this.lineLengths);
+  LineTerminatorFormat lineTerminatorFormat;
+  IndentData indentData;
 
   @override
   String toString() {
     return 'ProjectFile{fileLocation: $fileLocation, fileName: $fileName, document: $document, ll: $lineLengths}';
   }
 }
+
+enum LineTerminatorFormat { LF, CRLF }

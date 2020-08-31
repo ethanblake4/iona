@@ -32,12 +32,12 @@ final defaultSupportedCompletionKinds = HashSet<CompletionItemKind>.of([
   CompletionItemKind.Unit,
   CompletionItemKind.Value,
   CompletionItemKind.Enum,
-  CompletionItemKind.Keyword,
+  /*CompletionItemKind.Keyword,
   CompletionItemKind.Snippet,
   CompletionItemKind.Color,
   CompletionItemKind.File,
   CompletionItemKind.Reference,
-  CompletionItemKind.TypeParameter
+  CompletionItemKind.TypeParameter*/
 ]);
 
 class Completion {
@@ -62,7 +62,7 @@ class Completion {
       // we shouldn't consider this an error when merging with plugin results.
 
       final item = TextDocumentClientCapabilitiesCompletionItem(
-          true, true, [MarkupKind.PlainText, MarkupKind.Markdown], true, true);
+          false, true, [MarkupKind.PlainText, MarkupKind.Markdown], true, true);
       final kind = TextDocumentClientCapabilitiesCompletionItemKind(defaultSupportedCompletionKinds.toList());
       final serverResultsFuture = unit.isError
           ? Future.value(success(const <CompletionItem>[]))

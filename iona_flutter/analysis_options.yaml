@@ -2,3 +2,7 @@ include: ../analysis_options.yaml
 linter:
   rules:
     public_member_api_docs: false
+    always_put_control_body_on_new_line: false
+    omit_local_variable_types: false
+    avoid_types_on_closure_parameters: false
+    avoid_catches_without_on_clauses: false

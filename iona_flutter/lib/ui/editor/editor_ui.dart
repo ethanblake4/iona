@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/src/gestures/events.dart';
 import 'package:flutter/widgets.dart';
 import 'package:iona_flutter/ui/editor/editor.dart';
+import 'package:iona_flutter/util/patterns.dart';
 
 import '../painting/util/text_layout_cache.dart';
 import 'theme/editor_theme.dart';
@@ -119,7 +120,7 @@ class EditorUi extends CustomPainter {
       offsetYPos += lineHeight;
     }
 
-    if (Random().nextInt(100) < 5) print('time paint: ${DateTime.now().millisecondsSinceEpoch - startMs}');
+    //if (Random().nextInt(100) < 5) print('time paint: ${DateTime.now().millisecondsSinceEpoch - startMs}');
   }
 
   @override
@@ -186,6 +187,60 @@ class EditorUiLine {
   @override
   int get hashCode => fragments.hashCode;
 
+  EditorTextFragment fragmentAtPosition(int pos) {
+    var accum = 0;
+    for (var frag in fragments) {
+      if (accum >= pos) {
+        return frag;
+      }
+      accum += frag.text.length;
+    }
+    return null;
+  }
+
+  int suggestionStart(int pos) {
+    var accum = 0;
+    for (final frag in fragments) {
+      accum += frag.text.length;
+      if (accum >= pos) {
+        return accum - frag.text.trimLeft().length;
+      }
+    }
+    return 0;
+  }
+
+  int insertEnd(int pos) {
+    var accum = 0;
+    for (final frag in fragments) {
+      accum += frag.text.length;
+      if (accum >= pos) {
+        return accum;
+      }
+    }
+    return 0;
+  }
+
+  String stringVal() {
+    final sb = StringBuffer();
+    for (final frag in fragments) {
+      sb.write(frag.text);
+    }
+    return sb.toString();
+  }
+
+  int indentStart() {
+    var accum = 0;
+    for (final frag in fragments) {
+      final trimLen = frag.text.trimLeft().length;
+      if (trimLen == 0 || frag.text == '\n' || frag.text == '\r\n') {
+        accum += frag.text.replaceAll(newlineChars, '').length;
+      } else {
+        return accum + frag.text.length - trimLen;
+      }
+    }
+    return accum;
+  }
+
   @override
   String toString() {
     return 'EditorUiLine{fragments: $fragments}';
@@ -247,6 +302,19 @@ class EditorCursor {
   String toString() {
     return 'EditorCursor{line: $line, endLine: $endLine, position: $position, endPosition: $endPosition}';
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EditorCursor &&
+          runtimeType == other.runtimeType &&
+          line == other.line &&
+          endLine == other.endLine &&
+          position == other.position &&
+          endPosition == other.endPosition;
+
+  @override
+  int get hashCode => line.hashCode ^ endLine.hashCode ^ position.hashCode ^ endPosition.hashCode;
 }
 
 // ignore: avoid_classes_with_only_static_members

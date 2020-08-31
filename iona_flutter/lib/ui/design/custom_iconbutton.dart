@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
 
-const double _kMinButtonSize = 24.0;
+const double _kMinButtonSize = 18.0;
 
 class CustomIconButton extends StatelessWidget {
   /// Creates an icon button.
@@ -20,15 +20,16 @@ class CustomIconButton extends StatelessWidget {
   /// or an [ImageIcon].
   const CustomIconButton(
       {Key key,
-      this.iconSize: 24.0,
-      this.padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      this.alignment: Alignment.center,
+      this.iconSize = 24.0,
+      this.padding = const EdgeInsets.symmetric(horizontal: 8.0),
+      this.alignment = Alignment.center,
       @required this.icon,
       this.color,
       this.highlightColor,
       this.splashColor,
       this.disabledColor,
       @required this.onPressed,
+      this.focusNode,
       this.tooltip})
       : assert(iconSize != null),
         assert(padding != null),
@@ -86,6 +87,9 @@ class CustomIconButton extends StatelessWidget {
   ///  ),
   /// ```
   final Color color;
+
+  /// The focus node to use
+  final FocusNode focusNode;
 
   /// The primary color of the button when the button is in the down (pressed) state.
   /// The splash is represented as a circular overlay that appears above the
@@ -151,9 +155,10 @@ class CustomIconButton extends StatelessWidget {
     if (tooltip != null) {
       result = new Tooltip(message: tooltip, child: result);
     }
-    return new InkResponse(
+    return InkResponse(
       onTap: onPressed,
       child: result,
+      focusNode: focusNode,
       highlightColor: highlightColor ?? Theme.of(context).highlightColor,
       splashColor: splashColor ?? Theme.of(context).splashColor,
       radius: math.min(

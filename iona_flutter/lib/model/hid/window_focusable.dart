@@ -4,7 +4,7 @@ class WindowFocusable extends InheritedWidget {
   WindowFocusable(this.controller, {Key key, Widget child}) : super(key: key, child: child);
 
   /// Inherit this widget
-  static WindowFocusable of(BuildContext context) => context.inheritFromWidgetOfExactType(WindowFocusable);
+  static WindowFocusable of(BuildContext context) => context.dependOnInheritedWidgetOfExactType<WindowFocusable>();
 
   final _WindowFocusableControllerState controller;
 

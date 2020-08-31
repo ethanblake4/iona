@@ -8,7 +8,7 @@ import 'language_theme.dart';
 EditorTheme testTheme = EditorTheme(
     backgroundColor: Colors.blueGrey,
     selectionColor: Colors.blueGrey[300],
-    baseStyle: TextStyle(color: Colors.white, fontFamily: 'Cascadia', fontWeight: FontWeight.w400, fontFeatures: [
+    baseStyle: TextStyle(color: Colors.white, fontFamily: 'Hack', fontWeight: FontWeight.w400, fontFeatures: [
       FontFeature('liga'),
       FontFeature('clig'),
       FontFeature('dlig'),

@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:time/time.dart';
 
 const Duration _kDropdownMenuDuration = Duration(milliseconds: 300);
 const double _kMenuItemHeight = 24.0;
@@ -85,9 +86,10 @@ class DesktopDropdownMenuItem<T> extends _DropdownMenuItemContainer {
     Key key,
     this.onTap,
     this.value,
+    this.tooltip,
     @required Widget child,
-  }) : assert(child != null),
-        super(key: key, child: child);
+  })  : assert(child != null),
+        super(key: key, child: child, tooltip: tooltip);
 
   /// Called when the dropdown menu item is tapped.
   final VoidCallback onTap;
@@ -96,6 +98,7 @@ class DesktopDropdownMenuItem<T> extends _DropdownMenuItemContainer {
   ///
   /// Eventually returned in a call to [DropdownButton.onChanged].
   final T value;
+  final String tooltip;
 }
 
 // Do not use the platform-specific default scroll configuration.
@@ -124,7 +127,7 @@ class _DropdownMenuItemButton<T> extends StatefulWidget {
     @required this.itemIndex,
   }) : super(key: key);
 
-  final _DropdownRoute<T> route;
+  final DropdownRoute<T> route;
   final EdgeInsets padding;
   final Rect buttonRect;
   final BoxConstraints constraints;
@@ -166,7 +169,7 @@ class _DropdownMenuItemButtonState<T> extends State<_DropdownMenuItemButton<T>> 
 
     Navigator.pop(
       context,
-      _DropdownRouteResult<T>(dropdownMenuItem.value),
+      DropdownRouteResult<T>(dropdownMenuItem.value),
     );
   }
 
@@ -219,7 +222,7 @@ class _DropdownMenu<T> extends StatefulWidget {
     this.dropdownColor,
   }) : super(key: key);
 
-  final _DropdownRoute<T> route;
+  final DropdownRoute<T> route;
   final EdgeInsets padding;
   final Rect buttonRect;
   final BoxConstraints constraints;
@@ -264,7 +267,7 @@ class _DropdownMenuState<T> extends State<_DropdownMenu<T>> {
     // in the first 0.25s.
     assert(debugCheckHasMaterialLocalizations(context));
     final MaterialLocalizations localizations = MaterialLocalizations.of(context);
-    final _DropdownRoute<T> route = widget.route;
+    final DropdownRoute<T> route = widget.route;
     final List<Widget> children = <Widget>[
       for (int itemIndex = 0; itemIndex < route.items.length; ++itemIndex)
         _DropdownMenuItemButton<T>(
@@ -322,7 +325,7 @@ class _DropdownMenuRouteLayout<T> extends SingleChildLayoutDelegate {
   });
 
   final Rect buttonRect;
-  final _DropdownRoute<T> route;
+  final DropdownRoute<T> route;
   final TextDirection textDirection;
 
   @override
@@ -369,7 +372,7 @@ class _DropdownMenuRouteLayout<T> extends SingleChildLayoutDelegate {
         break;
     }
 
-    return Offset(left, menuLimits.top);
+    return Offset(left + 12, menuLimits.top);
   }
 
   @override
@@ -382,14 +385,14 @@ class _DropdownMenuRouteLayout<T> extends SingleChildLayoutDelegate {
 // canceling the route (which returns null) would get confused with actually
 // returning a real null value.
 @immutable
-class _DropdownRouteResult<T> {
-  const _DropdownRouteResult(this.result);
+class DropdownRouteResult<T> {
+  const DropdownRouteResult(this.result);
 
   final T result;
 
   @override
   bool operator ==(Object other) {
-    return other is _DropdownRouteResult<T> && other.result == result;
+    return other is DropdownRouteResult<T> && other.result == result;
   }
 
   @override
@@ -398,14 +401,15 @@ class _DropdownRouteResult<T> {
 
 class _MenuLimits {
   const _MenuLimits(this.top, this.bottom, this.height, this.scrollOffset);
+
   final double top;
   final double bottom;
   final double height;
   final double scrollOffset;
 }
 
-class _DropdownRoute<T> extends PopupRoute<_DropdownRouteResult<T>> {
-  _DropdownRoute({
+class DropdownRoute<T> extends PopupRoute<DropdownRouteResult<T>> {
+  DropdownRoute({
     this.items,
     this.padding,
     this.buttonRect,
@@ -419,7 +423,7 @@ class _DropdownRoute<T> extends PopupRoute<_DropdownRouteResult<T>> {
   })  : assert(style != null),
         itemHeights = List<double>.filled(items.length, itemHeight ?? 24.0);
 
-  final List<_MenuItem<T>> items;
+  final List<DMenuItem<T>> items;
   final EdgeInsetsGeometry padding;
   final Rect buttonRect;
   final int selectedIndex;
@@ -462,7 +466,7 @@ class _DropdownRoute<T> extends PopupRoute<_DropdownRouteResult<T>> {
     });
   }
 
-  void _dismiss() {
+  void dismiss() {
     navigator?.removeRoute(this);
   }
 
@@ -481,7 +485,7 @@ class _DropdownRoute<T> extends PopupRoute<_DropdownRouteResult<T>> {
   // that's possible given availableHeight.
   _MenuLimits getMenuLimits(Rect buttonRect, double availableHeight, int index) {
     final double maxMenuHeight = availableHeight - 2.0 * _kMenuItemHeight;
-    final double buttonTop = buttonRect.top;
+    final double buttonTop = buttonRect.top + 4;
     final double buttonBottom = math.min(buttonRect.bottom, availableHeight);
     final double selectedItemOffset = getItemOffset(index);
 
@@ -541,9 +545,9 @@ class _DropdownRoutePage<T> extends StatelessWidget {
     this.dropdownColor,
   }) : super(key: key);
 
-  final _DropdownRoute<T> route;
+  final DropdownRoute<T> route;
   final BoxConstraints constraints;
-  final List<_MenuItem<T>> items;
+  final List<DMenuItem<T>> items;
   final EdgeInsetsGeometry padding;
   final Rect buttonRect;
   final int selectedIndex;
@@ -605,8 +609,8 @@ class _DropdownRoutePage<T> extends StatelessWidget {
 // item so that _DropdownRoutePage can align the vertical center of the
 // selected item lines up with the vertical center of the dropdown button,
 // as closely as possible.
-class _MenuItem<T> extends SingleChildRenderObjectWidget {
-  const _MenuItem({
+class DMenuItem<T> extends SingleChildRenderObjectWidget {
+  const DMenuItem({
     Key key,
     @required this.onLayout,
     @required this.item,
@@ -651,6 +655,7 @@ class _DropdownMenuItemContainer extends StatelessWidget {
   const _DropdownMenuItemContainer({
     Key key,
     @required this.child,
+    this.tooltip,
   })  : assert(child != null),
         super(key: key);
 
@@ -658,13 +663,21 @@ class _DropdownMenuItemContainer extends StatelessWidget {
   ///
   /// Typically a [Text] widget.
   final Widget child;
+  final String tooltip;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final c = Container(
       constraints: const BoxConstraints(minHeight: _kMenuItemHeight),
       alignment: AlignmentDirectional.centerStart,
       child: child,
+    );
+    if (tooltip == null) return c;
+    return Tooltip(
+      padding: EdgeInsets.all(12),
+      child: c,
+      message: tooltip,
+      waitDuration: 400.milliseconds,
     );
   }
 }
@@ -1065,9 +1078,10 @@ class DesktopDropdownButton<T> extends StatefulWidget {
 
 class _DesktopDropdownButtonState<T> extends State<DesktopDropdownButton<T>> with WidgetsBindingObserver {
   int _selectedIndex;
-  _DropdownRoute<T> _dropdownRoute;
+  DropdownRoute<T> _dropdownRoute;
   Orientation _lastOrientation;
   FocusNode _internalNode;
+
   FocusNode get focusNode => widget.focusNode ?? _internalNode;
   bool _hasPrimaryFocus = false;
   Map<Type, Action<Intent>> _actionMap;
@@ -1107,7 +1121,7 @@ class _DesktopDropdownButtonState<T> extends State<DesktopDropdownButton<T>> wit
   }
 
   void _removeDropdownRoute() {
-    _dropdownRoute?._dismiss();
+    _dropdownRoute?.dismiss();
     _dropdownRoute = null;
     _lastOrientation = null;
   }
@@ -1168,9 +1182,9 @@ class _DesktopDropdownButtonState<T> extends State<DesktopDropdownButton<T>> wit
     final EdgeInsetsGeometry menuMargin =
         ButtonTheme.of(context).alignedDropdown ? _kAlignedMenuMargin : _kUnalignedMenuMargin;
 
-    final List<_MenuItem<T>> menuItems = List<_MenuItem<T>>(widget.items.length);
+    final List<DMenuItem<T>> menuItems = List<DMenuItem<T>>(widget.items.length);
     for (int index = 0; index < widget.items.length; index += 1) {
-      menuItems[index] = _MenuItem<T>(
+      menuItems[index] = DMenuItem<T>(
         item: widget.items[index],
         onLayout: (Size size) {
           // If [_dropdownRoute] is null and onLayout is called, this means
@@ -1189,7 +1203,7 @@ class _DesktopDropdownButtonState<T> extends State<DesktopDropdownButton<T>> wit
     }
 
     assert(_dropdownRoute == null);
-    _dropdownRoute = _DropdownRoute<T>(
+    _dropdownRoute = DropdownRoute<T>(
       items: menuItems,
       buttonRect: menuMargin.resolve(textDirection).inflateRect(itemRect),
       padding: _kMenuItemPadding.resolve(textDirection),
@@ -1202,7 +1216,7 @@ class _DesktopDropdownButtonState<T> extends State<DesktopDropdownButton<T>> wit
       dropdownColor: widget.dropdownColor,
     );
 
-    Navigator.push(context, _dropdownRoute).then<void>((_DropdownRouteResult<T> newValue) {
+    Navigator.push(context, _dropdownRoute).then<void>((DropdownRouteResult<T> newValue) {
       _removeDropdownRoute();
       if (!mounted || newValue == null) return;
       if (widget.onChanged != null) widget.onChanged(newValue.result);

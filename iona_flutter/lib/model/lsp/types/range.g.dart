@@ -15,7 +15,7 @@ class _$RangeSerializer implements StructuredSerializer<Range> {
   final String wireName = 'Range';
 
   @override
-  Iterable serialize(Serializers serializers, Range object,
+  Iterable<Object> serialize(Serializers serializers, Range object,
       {FullType specifiedType = FullType.unspecified}) {
     final result = <Object>[
       'start',
@@ -30,7 +30,7 @@ class _$RangeSerializer implements StructuredSerializer<Range> {
   }
 
   @override
-  Range deserialize(Serializers serializers, Iterable serialized,
+  Range deserialize(Serializers serializers, Iterable<Object> serialized,
       {FullType specifiedType = FullType.unspecified}) {
     final result = new RangeBuilder();
 

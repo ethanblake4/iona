@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:pedantic/pedantic.dart';
+import 'package:time/time.dart';
 
 class Shell {
   /// Create a Shell interface
@@ -33,7 +34,7 @@ class Shell {
 
     bash.sink.write('ls\n');
 
-    await Future.delayed(const Duration(milliseconds: 50));
+    await Future.delayed(50.milliseconds);
     print('Did LS');
 
     var sess = 'Creator452';
@@ -42,7 +43,7 @@ class Shell {
         workingDirectory: workingDirectory, runInShell: true);
     print(await init.exitCode);
 
-    await Future.delayed(const Duration(milliseconds: 50));
+    await Future.delayed(50.milliseconds);
     print('Did NewSession');
 
     final init2 =
@@ -56,7 +57,7 @@ class Shell {
         workingDirectory: workingDirectory, runInShell: true);
     print(await init4.exitCode);
 
-    await Future.delayed(const Duration(milliseconds: 50));
+    await Future.delayed(50.milliseconds);
     print('Did Pipe');
     print('Tmux shell started');
     //await init.exitCode;
