@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:analysis_server/lsp_protocol/protocol_generated.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:flutter/material.dart' hide Builder;
 import 'package:flutter/rendering.dart';
@@ -12,7 +13,7 @@ import 'package:iona_flutter/model/hid/key_codes.dart' as key_codes;
 import 'package:iona_flutter/model/ide/ide_theme.dart';
 import 'package:iona_flutter/model/ide/project.dart';
 import 'package:iona_flutter/model/syntax/syntax_definition.dart';
-import 'package:iona_flutter/plugin/dart/completion/protocol/protocol_generated.dart' show CompletionItem;
+//import 'package:iona_flutter/plugin/dart/completion/protocol/protocol_generated.dart' show CompletionItem;
 import 'package:iona_flutter/plugin/dart/dart_analysis.dart';
 import 'package:iona_flutter/ui/design/custom_iconbutton.dart';
 import 'package:iona_flutter/ui/editor/completions.dart';
@@ -438,7 +439,7 @@ class _EditorState extends State<Editor> {
             } else {
               //Changeset ec;
 
-              var shouldComplete = false;
+              var shouldComplete = true;
               var restrictComplete = false;
 
               if (keyCode == key_codes.backspace) {
@@ -505,6 +506,7 @@ class _EditorState extends State<Editor> {
               if (_hasMovedCursor) completions = [];
 
               if (shouldComplete && _curFile.endsWith('.dart')) {
+                print('will attempt code complete');
                 codeComplete(data.characters);
 
                 if (!didComplete) {

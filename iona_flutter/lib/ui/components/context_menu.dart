@@ -29,7 +29,7 @@ Future<T> showContextMenu<T>(BuildContext context, Rect source, List<DesktopDrop
     padding: EdgeInsets.all(8),
     selectedIndex: 0,
     elevation: elevation,
-    theme: Theme.of(context, shadowThemeOnly: true),
+    theme: Theme.of(context),
     style: style ?? Theme.of(context).textTheme.subtitle1,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     itemHeight: itemHeight,

@@ -87,14 +87,13 @@ class _OutputAreaState extends State<OutputArea> {
                           });
                         },
                         child: dt.DevToolsApp(
-                          dt.defaultScreens,
-                          prefs,
-                          RouteSettings(name: '/'),
-                          dt.IdeTheme(
-                              backgroundColor: Colors.blueGrey[700],
-                              foregroundColor: Colors.blueGrey[100],
-                              fontSize: 12.0),
-                        ))
+                            dt.defaultScreens,
+                            prefs,
+                            dt.IdeTheme(
+                                backgroundColor: Colors.blueGrey[700],
+                                foregroundColor: Colors.blueGrey[100],
+                                fontSize: 12.0),
+                            dt.provider))
                     : Container())));
 
     final tabBar = Row(children: [

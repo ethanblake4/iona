@@ -98,6 +98,8 @@ class ComplexX4 {
 
   /// Divide a [ComplexX4] by another [ComplexX4]
   ComplexX4 operator /(ComplexX4 other) {
+    // a,b,c,d
+
     final pow = (other.re * other.re) + (other.im * other.im);
     return ComplexX4(
       ((re * other.re) + (im * other.im)) / pow,

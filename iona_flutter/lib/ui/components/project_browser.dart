@@ -43,7 +43,7 @@ class _ProjectBrowserState extends State<ProjectBrowser> {
           child: Material(
             color: IdeTheme.of(context).projectBrowserBackground.col,
             child: FileTreeSelectionParent(
-              child: CupertinoScrollbar(
+              child: Scrollbar(
                 controller: controller,
                 child: SingleChildScrollView(
                     controller: controller,

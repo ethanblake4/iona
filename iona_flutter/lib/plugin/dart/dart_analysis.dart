@@ -1,17 +1,16 @@
 import 'dart:async';
 import 'dart:isolate';
 
+import 'package:analysis_server/lsp_protocol/protocol_generated.dart';
+import 'package:analysis_server/lsp_protocol/protocol_special.dart';
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/file_system/file_system.dart';
 import 'package:analyzer/file_system/physical_file_system.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:iona_flutter/model/ide/tasks.dart';
-import 'package:iona_flutter/plugin/dart/completion/protocol/protocol_generated.dart';
 import 'package:iona_flutter/plugin/dart/dart_analysis_engine.dart';
 import 'package:iona_flutter/plugin/dart/model/analysis_message.dart';
 import 'package:iona_flutter/plugin/dart/tasks/dart_tasks.dart';
-
-import 'completion/protocol/protocol_special.dart';
 
 class DartAnalyzer {
   static DartAnalyzer _instance;
@@ -71,12 +70,17 @@ class DartAnalyzer {
   }
 
   Future<List<CompletionItem>> completeChar(String char, String file, int line, int offset) async {
+    print('cp');
     if (!DartAnalysisEngine.isDartFileName(file)) return null;
-    final params = CompletionParams(CompletionContext(CompletionTriggerKind.TriggerCharacter, char),
-        TextDocumentIdentifier(Uri.file(file).toString()), Position(line, offset));
+    final ctx = CompletionContext(triggerKind: CompletionTriggerKind.TriggerCharacter, triggerCharacter: char);
+    final doc = TextDocumentIdentifier(uri: Uri.file(file).toString());
+    final p = CompletionParams(context: ctx, textDocument: doc, position: Position(line: line, character: offset));
+    //final params = CompletionParams(CompletionContext(CompletionTriggerKind.TriggerCharacter, char),
+    //    TextDocumentIdentifier(Uri.file(file).toString()), Position(line, offset));
     if (_sendPort != null) {
       final response = ReceivePort();
-      _sendPort.send([AnalysisMessage('complete', params), response.sendPort]);
+      print('send cp');
+      _sendPort.send([AnalysisMessage('complete', p), response.sendPort]);
       final value = ((await response.first) as AnalysisMessage).content as ErrorOr<List<CompletionItem>>;
       if (value.isError) {
         print(value.error);

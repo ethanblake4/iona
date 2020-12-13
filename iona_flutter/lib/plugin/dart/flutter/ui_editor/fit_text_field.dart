@@ -889,7 +889,7 @@ class _FitTextFieldState extends State<FitTextField> implements TextSelectionGes
   }
 
   bool get _canRequestFocus {
-    final NavigationMode mode = MediaQuery.of(context, nullOk: true)?.navigationMode ?? NavigationMode.traditional;
+    final NavigationMode mode = MediaQuery.maybeOf(context)?.navigationMode ?? NavigationMode.traditional;
     switch (mode) {
       case NavigationMode.traditional:
         return _isEnabled;

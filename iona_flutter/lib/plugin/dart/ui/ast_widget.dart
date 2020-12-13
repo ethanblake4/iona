@@ -19,6 +19,10 @@ class _AstWidgetState extends State<AstWidget> {
   Widget build(BuildContext context) {
     final scope = DartScope(null);
 
+    if (widget.file == null) {
+      return Text('No file');
+    }
+
     for (final element in widget.file.widgets) {
       final Map<String, DartEvalType> fields = {};
       final Map<String, DartEvalCallable> methods = {};

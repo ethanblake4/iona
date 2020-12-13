@@ -1,8 +1,8 @@
 import 'dart:math';
 
+import 'package:analysis_server/lsp_protocol/protocol_generated.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:iona_flutter/plugin/dart/completion/protocol/protocol_generated.dart';
 import 'package:iona_flutter/ui/editor/editor.dart';
 import 'package:iona_flutter/ui/editor/theme/editor_theme.dart';
 
