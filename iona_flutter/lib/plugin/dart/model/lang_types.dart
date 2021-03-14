@@ -1,8 +1,6 @@
 // ignore_for_file: public_member_api_docs
-import 'package:collection/collection.dart';
-import 'package:iona_flutter/plugin/dart/flutter/ui_editor/eval.dart';
-import 'package:iona_flutter/plugin/dart/flutter/ui_editor/known_paths.dart';
 
+/*
 /// Represents a node in Dart source code
 abstract class DartSourceNode {
   final int offset;
@@ -223,12 +221,14 @@ class DartInstanceCreationExpression extends DartExpression {
     final resolvedNamedParams = <String, dynamic>{};
     namedParameters.forEach((key, value) {
       resolvedNamedParams[key] = value.eval(scope).value;
-      //print(key);
-      //print(value);
-      //print('key: ${resolvedNamedParams[key]}');
     });
-    //print(this);
-    print(this);
+    print('"' + ConstructorPath.fromString(constructorLocation).type + '"');
+    print(scope);
+    final local = scope.lookup(ConstructorPath.fromString(constructorLocation).type);
+    print(local);
+    if (local is DartEvalTypeGeneric) {
+      return local;
+    }
     return scope.lookupResolved(constructorLocation)(
         this, positionalParameters.map((e) => e.eval(scope).value).toList(), resolvedNamedParams);
   }
@@ -567,3 +567,4 @@ class DartLnType extends DartSourceNode {
     return '[$library > $typeName]';
   }
 }
+*/

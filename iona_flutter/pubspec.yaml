@@ -39,6 +39,8 @@ dependencies:
     path: ../sdk/pkg/analysis_server
   cyclop:
     path: ../cyclop/
+  dart_eval:
+    path: ../dart_eval/
 
 
   # Desktop embedder plugins.

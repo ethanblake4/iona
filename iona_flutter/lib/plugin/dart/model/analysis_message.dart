@@ -1,4 +1,4 @@
-import 'package:iona_flutter/plugin/dart/model/lang_types.dart';
+import 'package:dart_eval/dart_eval.dart';
 
 class AnalysisMessage {
   final String type;
@@ -15,7 +15,8 @@ class FileOverlay {
 }
 
 class FlutterFileInfo {
-  List<FlutterWidgetInfo> widgets;
+  ScopeWrapper topLevelScope;
+  List<String> widgets;
 
   FlutterFileInfo(this.widgets);
 
@@ -24,7 +25,7 @@ class FlutterFileInfo {
     return 'FlutterFileInfo{widgets: $widgets}';
   }
 }
-
+/*
 class FlutterWidgetInfo {
   String name;
   DartClass widgetClass;
@@ -37,4 +38,4 @@ class FlutterWidgetInfo {
 
 class FlutterStatefulWidgetInfo extends FlutterWidgetInfo {
   DartClass stateClass;
-}
+}*/

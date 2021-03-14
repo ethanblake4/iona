@@ -1,7 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:iona_flutter/plugin/dart/flutter/ui_editor/editor_reporting_widget.dart';
-import 'package:iona_flutter/plugin/dart/flutter/ui_editor/eval.dart';
-
+/*
 class DartEvalTypeWidget<T extends Widget> extends DartEvalTypeObject<T> {
   const DartEvalTypeWidget(
     Widget value,
@@ -147,4 +144,4 @@ class DartEvalTypeColor<T extends Color> extends DartEvalTypeObject<T> {
         return super.getField(name);
     }
   }
-}
+}*/

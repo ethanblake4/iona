@@ -316,11 +316,12 @@ class _EditorState extends State<Editor> {
   }
 
   void acceptSuggestion(CompletionItem completion) {
-    print(_suggestionStart);
+    print('suggestion start: $_suggestionStart');
     var cur = controller.primaryCursor.copyWith(
         position: _suggestionStart - 1,
         endPosition: lines[controller.primaryCursor.line].insertEnd(_suggestionStart - 1) - 1);
     var ctext = completion.insertText;
+    print('suggestion is: $ctext');
     if (completion.textEdit != null) {
       final start = completion.textEdit.range.start.character;
       final end = completion.textEdit.range.end.character;
@@ -331,7 +332,7 @@ class _EditorState extends State<Editor> {
     ctext ??= completion.label;
 
     setState(() {
-      controller.insertAt(cur, ctext);
+      didUpdateDoc = controller.insertAt(cur, ctext);
       completions = [];
       didComplete = false;
       cursorBlink = true;

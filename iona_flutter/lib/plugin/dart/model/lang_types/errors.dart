@@ -1,6 +1,4 @@
-import 'package:iona_flutter/plugin/dart/flutter/ui_editor/eval.dart';
-
-class DartEvalTypeError<T extends Error> extends DartEvalTypeObject<T> {
+/*class DartEvalTypeError<T extends Error> extends DartEvalTypeObject<T> {
   const DartEvalTypeError(T value) : super(value);
 
   @override
@@ -21,3 +19,4 @@ class DartEvalTypeNoSuchMethodError<T extends NoSuchMethodError> extends DartEva
 class DartEvalTypeStackTrace<T extends StackTrace> extends DartEvalTypeObject<T> {
   const DartEvalTypeStackTrace(T value) : super(value);
 }
+*/

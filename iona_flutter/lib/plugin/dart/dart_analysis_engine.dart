@@ -70,7 +70,7 @@ class DartAnalysisEngine {
     ]);
 
     final ci = CompletionClientCapabilitiesCompletionItem(
-        snippetSupport: true,
+        snippetSupport: false,
         commitCharactersSupport: true,
         documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText],
         deprecatedSupport: true,

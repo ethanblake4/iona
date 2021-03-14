@@ -104,8 +104,7 @@ class EditorWidgetCanvas extends StatelessWidget {
                 fit: StackFit.passthrough,
                 children: [
                   Card(
-                    child:
-                        AstWidget(fileInfo, fileInfo?.widgets?.firstWhere((element) => element.name == selectedWidget)),
+                    child: AstWidget(fileInfo, selectedWidget),
                     elevation: 2.0,
                     shape: Border.all(color: Colors.blueGrey[600]),
                   ),

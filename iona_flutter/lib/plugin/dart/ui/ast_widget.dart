@@ -1,14 +1,14 @@
+import 'package:dart_eval/dart_eval.dart';
 import 'package:flutter/material.dart';
-import 'package:iona_flutter/plugin/dart/flutter/ui_editor/eval.dart';
 import 'package:iona_flutter/plugin/dart/model/analysis_message.dart';
 import 'package:iona_flutter/plugin/dart/model/flutter_types/flutter_types.dart';
 import 'package:iona_flutter/plugin/dart/model/lang_types.dart';
 
 class AstWidget extends StatefulWidget {
-  const AstWidget(this.file, this.astRoot);
+  const AstWidget(this.file, this.selectedWidget);
 
   final FlutterFileInfo file;
-  final FlutterWidgetInfo astRoot;
+  final String selectedWidget;
 
   @override
   _AstWidgetState createState() => _AstWidgetState();
@@ -17,13 +17,24 @@ class AstWidget extends StatefulWidget {
 class _AstWidgetState extends State<AstWidget> {
   @override
   Widget build(BuildContext context) {
-    final scope = DartScope(null);
+    //final scope = DartScope(null);
 
     if (widget.file == null) {
       return Text('No file');
     }
 
-    for (final element in widget.file.widgets) {
+    final cls = widget.file.topLevelScope.scope.lookup(widget.selectedWidget) as EvalClass;
+
+    // ignore: cascade_invocations
+    final wid = cls.call(widget.file.topLevelScope.scope, EvalScope.empty, [], []);
+
+    final build = wid.getField('build');
+
+    if (build is EvalFunction) {
+      build.call(EvalScope.empty, EvalScope.empty, [], [args]);
+    }
+
+    /*for (final element in widget.file.widgets) {
       final Map<String, DartEvalType> fields = {};
       final Map<String, DartEvalCallable> methods = {};
       for (final clsEl in element.widgetClass.classElements) {
@@ -45,32 +56,24 @@ class _AstWidgetState extends State<AstWidget> {
         }
       }
       scope.set(element.name, DartEvalTypeGeneric(null, fields: fields, methods: methods));
-    }
+    }*/
 
-    if (widget.astRoot == null) {
-      return Text('No widget');
-    }
+    final w = scope.lookup(widget.selectedWidget);
 
-    for (final cle in widget.astRoot.widgetClass.classElements) {
-      //cle.eval(scope);
-    }
+    final b = w.getMethod('build');
+    if (b != null) {
+      if (b is DartEvalCallable) {
+        final wid =
+            b.call(scope, [DartInjectedExpression(-1, -1, inject: (scope) => DartEvalTypeBuildContext(context))]);
 
-    final build = scope.lookup('build');
-
-    if (build is DartEvalCallable) {
-      final wid =
-          build.call(scope, [DartInjectedExpression(0, 0, inject: (scope) => DartEvalTypeBuildContext(context))]);
-      //print(wid);
-
-      if (wid is DartEvalTypeWidget) {
-        return wid.value;
-      } else {
-        print(wid);
-        return Text('render fail');
+        if (wid is DartEvalTypeWidget) {
+          return wid.value;
+        } else {
+          print(wid);
+          return Text('Render failure');
+        }
       }
-    } else {
-      print(build);
-      return Text('not callable');
     }
+    return Text('No widget found');
   }
 }
