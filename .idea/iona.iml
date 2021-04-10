@@ -3,6 +3,20 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/cyclop/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/cyclop/build" />
+      <excludeFolder url="file://$MODULE_DIR$/cyclop/example/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/cyclop/example/build" />
+      <excludeFolder url="file://$MODULE_DIR$/dart_eval/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/dart_eval/build" />
+      <excludeFolder url="file://$MODULE_DIR$/devtools/case_study/code_size/optimized/code_size_images/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/devtools/case_study/code_size/optimized/code_size_images/build" />
+      <excludeFolder url="file://$MODULE_DIR$/devtools/case_study/code_size/optimized/code_size_package/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/devtools/case_study/code_size/optimized/code_size_package/build" />
+      <excludeFolder url="file://$MODULE_DIR$/devtools/case_study/code_size/unoptimized/code_size_images/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/devtools/case_study/code_size/unoptimized/code_size_images/build" />
+      <excludeFolder url="file://$MODULE_DIR$/devtools/case_study/code_size/unoptimized/code_size_package/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/devtools/case_study/code_size/unoptimized/code_size_package/build" />
       <excludeFolder url="file://$MODULE_DIR$/devtools/case_study/memory_leak/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/devtools/case_study/memory_leak/build" />
       <excludeFolder url="file://$MODULE_DIR$/devtools/case_study/memory_leaks/images_1/.pub" />
@@ -29,6 +43,12 @@
       <excludeFolder url="file://$MODULE_DIR$/devtools/third_party/packages/mp_chart/build" />
       <excludeFolder url="file://$MODULE_DIR$/devtools/tool/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/devtools/tool/build" />
+      <excludeFolder url="file://$MODULE_DIR$/ffi_terminal/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/ffi_terminal/build" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter_eval/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter_eval/build" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter_sample/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/flutter_sample/build" />
       <excludeFolder url="file://$MODULE_DIR$/iona_flutter/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/iona_flutter/build" />
       <excludeFolder url="file://$MODULE_DIR$/iona_flutter/macos/Flutter/ephemeral/.symlinks/plugins/color_panel/.pub" />
@@ -79,6 +99,16 @@
       <excludeFolder url="file://$MODULE_DIR$/iona_flutter/macos/Flutter/ephemeral/.symlinks/plugins/url_launcher_web/build" />
       <excludeFolder url="file://$MODULE_DIR$/iona_flutter/macos/Flutter/ephemeral/.symlinks/plugins/window_size/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/iona_flutter/macos/Flutter/ephemeral/.symlinks/plugins/window_size/build" />
+      <excludeFolder url="file://$MODULE_DIR$/iona_flutter/windows/flutter/ephemeral/.plugin_symlinks/file_chooser/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/iona_flutter/windows/flutter/ephemeral/.plugin_symlinks/file_chooser/build" />
+      <excludeFolder url="file://$MODULE_DIR$/iona_flutter/windows/flutter/ephemeral/.plugin_symlinks/menubar/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/iona_flutter/windows/flutter/ephemeral/.plugin_symlinks/menubar/build" />
+      <excludeFolder url="file://$MODULE_DIR$/iona_flutter/windows/flutter/ephemeral/.plugin_symlinks/path_provider_fde/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/iona_flutter/windows/flutter/ephemeral/.plugin_symlinks/path_provider_fde/build" />
+      <excludeFolder url="file://$MODULE_DIR$/iona_flutter/windows/flutter/ephemeral/.plugin_symlinks/url_launcher_fde/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/iona_flutter/windows/flutter/ephemeral/.plugin_symlinks/url_launcher_fde/build" />
+      <excludeFolder url="file://$MODULE_DIR$/iona_flutter/windows/flutter/ephemeral/.plugin_symlinks/window_size/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/iona_flutter/windows/flutter/ephemeral/.plugin_symlinks/window_size/build" />
       <excludeFolder url="file://$MODULE_DIR$/plugins/color_panel/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/plugins/color_panel/build" />
       <excludeFolder url="file://$MODULE_DIR$/plugins/file_chooser/.pub" />
