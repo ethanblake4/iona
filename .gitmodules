@@ -1,3 +1,9 @@
 [submodule "devtools"]
 	path = devtools
 	url = https://github.com/ethanblake4/devtools
+[submodule "dart_eval"]
+	path = dart_eval
+	url = https://github.com/ethanblake4/dart_eval.git
+[submodule "flutter_eval"]
+	path = flutter_eval
+	url = https://github.com/ethanblake4/flutter_eval.git
