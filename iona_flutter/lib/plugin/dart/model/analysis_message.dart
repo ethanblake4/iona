@@ -1,10 +1,19 @@
-import 'package:dart_eval/dart_eval.dart';
-
 class AnalysisMessage {
   final String type;
   final dynamic content;
 
   AnalysisMessage(this.type, this.content);
+
+  static const String setRootFolder = 'setRootFolder';
+  static const String complete = 'complete';
+  static const String overlay = 'overlay';
+}
+
+class SetRootFolderParams {
+  SetRootFolderParams(this.sdkPath, this.rootFolder);
+
+  String sdkPath;
+  String rootFolder;
 }
 
 class FileOverlay {
@@ -14,17 +23,6 @@ class FileOverlay {
   FileOverlay(this.path, this.content);
 }
 
-class FlutterFileInfo {
-  ScopeWrapper topLevelScope;
-  List<String> widgets;
-
-  FlutterFileInfo(this.widgets);
-
-  @override
-  String toString() {
-    return 'FlutterFileInfo{widgets: $widgets}';
-  }
-}
 /*
 class FlutterWidgetInfo {
   String name;

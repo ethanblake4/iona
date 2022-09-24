@@ -1,0 +1,3 @@
+Welcome to Iona!
+
+To get started, choose File > Open.

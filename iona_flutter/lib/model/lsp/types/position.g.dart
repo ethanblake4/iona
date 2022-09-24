@@ -37,7 +37,7 @@ class _$PositionSerializer implements StructuredSerializer<Position> {
     while (iterator.moveNext()) {
       final key = iterator.current as String;
       iterator.moveNext();
-      final dynamic value = iterator.current;
+      final Object value = iterator.current;
       switch (key) {
         case 'line':
           result.line = serializers.deserialize(value,
@@ -64,12 +64,8 @@ class _$Position extends Position {
       (new PositionBuilder()..update(updates)).build();
 
   _$Position._({this.line, this.character}) : super._() {
-    if (line == null) {
-      throw new BuiltValueNullFieldError('Position', 'line');
-    }
-    if (character == null) {
-      throw new BuiltValueNullFieldError('Position', 'character');
-    }
+    BuiltValueNullFieldError.checkNotNull(line, 'Position', 'line');
+    BuiltValueNullFieldError.checkNotNull(character, 'Position', 'character');
   }
 
   @override
@@ -115,9 +111,10 @@ class PositionBuilder implements Builder<Position, PositionBuilder> {
   PositionBuilder();
 
   PositionBuilder get _$this {
-    if (_$v != null) {
-      _line = _$v.line;
-      _character = _$v.character;
+    final $v = _$v;
+    if ($v != null) {
+      _line = $v.line;
+      _character = $v.character;
       _$v = null;
     }
     return this;
@@ -125,9 +122,7 @@ class PositionBuilder implements Builder<Position, PositionBuilder> {
 
   @override
   void replace(Position other) {
-    if (other == null) {
-      throw new ArgumentError.notNull('other');
-    }
+    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$Position;
   }
 
@@ -138,10 +133,15 @@ class PositionBuilder implements Builder<Position, PositionBuilder> {
 
   @override
   _$Position build() {
-    final _$result = _$v ?? new _$Position._(line: line, character: character);
+    final _$result = _$v ??
+        new _$Position._(
+            line:
+                BuiltValueNullFieldError.checkNotNull(line, 'Position', 'line'),
+            character: BuiltValueNullFieldError.checkNotNull(
+                character, 'Position', 'character'));
     replace(_$result);
     return _$result;
   }
 }
 
-// ignore_for_file: always_put_control_body_on_new_line,always_specify_types,annotate_overrides,avoid_annotating_with_dynamic,avoid_as,avoid_catches_without_on_clauses,avoid_returning_this,lines_longer_than_80_chars,omit_local_variable_types,prefer_expression_function_bodies,sort_constructors_first,test_types_in_equals,unnecessary_const,unnecessary_new
+// ignore_for_file: always_put_control_body_on_new_line,always_specify_types,annotate_overrides,avoid_annotating_with_dynamic,avoid_as,avoid_catches_without_on_clauses,avoid_returning_this,deprecated_member_use_from_same_package,lines_longer_than_80_chars,omit_local_variable_types,prefer_expression_function_bodies,sort_constructors_first,test_types_in_equals,unnecessary_const,unnecessary_new

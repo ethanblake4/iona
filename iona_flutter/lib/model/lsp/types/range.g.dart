@@ -38,7 +38,7 @@ class _$RangeSerializer implements StructuredSerializer<Range> {
     while (iterator.moveNext()) {
       final key = iterator.current as String;
       iterator.moveNext();
-      final dynamic value = iterator.current;
+      final Object value = iterator.current;
       switch (key) {
         case 'start':
           result.start.replace(serializers.deserialize(value,
@@ -65,12 +65,8 @@ class _$Range extends Range {
       (new RangeBuilder()..update(updates)).build();
 
   _$Range._({this.start, this.end}) : super._() {
-    if (start == null) {
-      throw new BuiltValueNullFieldError('Range', 'start');
-    }
-    if (end == null) {
-      throw new BuiltValueNullFieldError('Range', 'end');
-    }
+    BuiltValueNullFieldError.checkNotNull(start, 'Range', 'start');
+    BuiltValueNullFieldError.checkNotNull(end, 'Range', 'end');
   }
 
   @override
@@ -114,9 +110,10 @@ class RangeBuilder implements Builder<Range, RangeBuilder> {
   RangeBuilder();
 
   RangeBuilder get _$this {
-    if (_$v != null) {
-      _start = _$v.start?.toBuilder();
-      _end = _$v.end?.toBuilder();
+    final $v = _$v;
+    if ($v != null) {
+      _start = $v.start.toBuilder();
+      _end = $v.end.toBuilder();
       _$v = null;
     }
     return this;
@@ -124,9 +121,7 @@ class RangeBuilder implements Builder<Range, RangeBuilder> {
 
   @override
   void replace(Range other) {
-    if (other == null) {
-      throw new ArgumentError.notNull('other');
-    }
+    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$Range;
   }
 
@@ -158,4 +153,4 @@ class RangeBuilder implements Builder<Range, RangeBuilder> {
   }
 }
 
-// ignore_for_file: always_put_control_body_on_new_line,always_specify_types,annotate_overrides,avoid_annotating_with_dynamic,avoid_as,avoid_catches_without_on_clauses,avoid_returning_this,lines_longer_than_80_chars,omit_local_variable_types,prefer_expression_function_bodies,sort_constructors_first,test_types_in_equals,unnecessary_const,unnecessary_new
+// ignore_for_file: always_put_control_body_on_new_line,always_specify_types,annotate_overrides,avoid_annotating_with_dynamic,avoid_as,avoid_catches_without_on_clauses,avoid_returning_this,deprecated_member_use_from_same_package,lines_longer_than_80_chars,omit_local_variable_types,prefer_expression_function_bodies,sort_constructors_first,test_types_in_equals,unnecessary_const,unnecessary_new

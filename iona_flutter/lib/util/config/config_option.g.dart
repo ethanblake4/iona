@@ -51,13 +51,13 @@ class _$ConfigOptionSerializer
 
     final result = isUnderspecified
         ? new ConfigOptionBuilder<Object>()
-        : serializers.newBuilder(specifiedType) as ConfigOptionBuilder;
+        : serializers.newBuilder(specifiedType) as ConfigOptionBuilder<Object>;
 
     final iterator = serialized.iterator;
     while (iterator.moveNext()) {
       final key = iterator.current as String;
       iterator.moveNext();
-      final dynamic value = iterator.current;
+      final Object value = iterator.current;
       switch (key) {
         case 'scope':
           result.scope = serializers.deserialize(value,
@@ -90,15 +90,9 @@ class _$ConfigOption<T> extends ConfigOption<T> {
       (new ConfigOptionBuilder<T>()..update(updates)).build();
 
   _$ConfigOption._({this.scope, this.id, this.value}) : super._() {
-    if (scope == null) {
-      throw new BuiltValueNullFieldError('ConfigOption', 'scope');
-    }
-    if (id == null) {
-      throw new BuiltValueNullFieldError('ConfigOption', 'id');
-    }
-    if (value == null) {
-      throw new BuiltValueNullFieldError('ConfigOption', 'value');
-    }
+    BuiltValueNullFieldError.checkNotNull(scope, 'ConfigOption', 'scope');
+    BuiltValueNullFieldError.checkNotNull(id, 'ConfigOption', 'id');
+    BuiltValueNullFieldError.checkNotNull(value, 'ConfigOption', 'value');
     if (T == dynamic) {
       throw new BuiltValueMissingGenericsError('ConfigOption', 'T');
     }
@@ -155,10 +149,11 @@ class ConfigOptionBuilder<T>
   ConfigOptionBuilder();
 
   ConfigOptionBuilder<T> get _$this {
-    if (_$v != null) {
-      _scope = _$v.scope;
-      _id = _$v.id;
-      _value = _$v.value;
+    final $v = _$v;
+    if ($v != null) {
+      _scope = $v.scope;
+      _id = $v.id;
+      _value = $v.value;
       _$v = null;
     }
     return this;
@@ -166,9 +161,7 @@ class ConfigOptionBuilder<T>
 
   @override
   void replace(ConfigOption<T> other) {
-    if (other == null) {
-      throw new ArgumentError.notNull('other');
-    }
+    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$ConfigOption<T>;
   }
 
@@ -179,11 +172,16 @@ class ConfigOptionBuilder<T>
 
   @override
   _$ConfigOption<T> build() {
-    final _$result =
-        _$v ?? new _$ConfigOption<T>._(scope: scope, id: id, value: value);
+    final _$result = _$v ??
+        new _$ConfigOption<T>._(
+            scope: BuiltValueNullFieldError.checkNotNull(
+                scope, 'ConfigOption', 'scope'),
+            id: BuiltValueNullFieldError.checkNotNull(id, 'ConfigOption', 'id'),
+            value: BuiltValueNullFieldError.checkNotNull(
+                value, 'ConfigOption', 'value'));
     replace(_$result);
     return _$result;
   }
 }
 
-// ignore_for_file: always_put_control_body_on_new_line,always_specify_types,annotate_overrides,avoid_annotating_with_dynamic,avoid_as,avoid_catches_without_on_clauses,avoid_returning_this,lines_longer_than_80_chars,omit_local_variable_types,prefer_expression_function_bodies,sort_constructors_first,test_types_in_equals,unnecessary_const,unnecessary_new
+// ignore_for_file: always_put_control_body_on_new_line,always_specify_types,annotate_overrides,avoid_annotating_with_dynamic,avoid_as,avoid_catches_without_on_clauses,avoid_returning_this,deprecated_member_use_from_same_package,lines_longer_than_80_chars,omit_local_variable_types,prefer_expression_function_bodies,sort_constructors_first,test_types_in_equals,unnecessary_const,unnecessary_new

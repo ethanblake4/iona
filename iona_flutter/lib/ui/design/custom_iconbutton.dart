@@ -137,23 +137,23 @@ class CustomIconButton extends StatelessWidget {
     else
       currentColor = disabledColor ?? Theme.of(context).disabledColor;
 
-    Widget result = new ConstrainedBox(
+    Widget result = ConstrainedBox(
       constraints: const BoxConstraints(minWidth: _kMinButtonSize, minHeight: _kMinButtonSize),
-      child: new Padding(
+      child: Padding(
         padding: padding,
-        child: new SizedBox(
+        child: SizedBox(
           height: iconSize,
           width: iconSize,
-          child: new Align(
+          child: Align(
             alignment: alignment,
-            child: IconTheme.merge(data: new IconThemeData(size: iconSize, color: currentColor), child: icon),
+            child: IconTheme.merge(data: IconThemeData(size: iconSize, color: currentColor), child: icon),
           ),
         ),
       ),
     );
 
     if (tooltip != null) {
-      result = new Tooltip(message: tooltip, child: result);
+      result = Tooltip(message: tooltip, child: result);
     }
     return InkResponse(
       onTap: onPressed,

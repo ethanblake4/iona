@@ -68,11 +68,13 @@ class _EditorState extends State<Editor> {
   @override
   void initState() {
     super.initState();
-    final dir = Directory('./Iona/syntax');
+    final dir = Directory('./iona/syntax');
     final sx = dir.listSync();
     for (final s in sx) {
-      if (s.path.endsWith('.syntax') && s.statSync().type == FileSystemEntityType.file) {
-        syntaxes.add(SyntaxDefinition.parseYaml(loadYaml(File(s.path).readAsStringSync())));
+      if (s.path.endsWith('.syntax') &&
+          s.statSync().type == FileSystemEntityType.file) {
+        syntaxes.add(SyntaxDefinition.parseYaml(
+            loadYaml(File(s.path).readAsStringSync())));
       }
     }
     _focusNode.addListener(() {
@@ -94,7 +96,8 @@ class _EditorState extends State<Editor> {
     });
     reupBlink();
     MenuBarManager()
-      ..updateItem(MenuCategory.edit, 'undo', 'undo', enabled: false, action: () {
+      ..updateItem(MenuCategory.edit, 'undo', 'undo', enabled: false,
+          action: () {
         setState(() {
           try {
             if (controller.undo()) {
@@ -108,13 +111,17 @@ class _EditorState extends State<Editor> {
           }
         });
       })
-      ..updateItem(MenuCategory.edit, 'clipboard', 'paste', enabled: true, action: paste)
-      ..updateItem(MenuCategory.file, 'save', 'save', enabled: false, action: saveCurrentFile)
+      ..updateItem(MenuCategory.edit, 'clipboard', 'paste',
+          enabled: true, action: paste)
+      ..updateItem(MenuCategory.file, 'save', 'save',
+          enabled: false, action: saveCurrentFile)
       ..publish();
-    _changeActiveFileSubscription = eventBus.on<MakeEditorFileActive>().listen((event) {
+    _changeActiveFileSubscription =
+        eventBus.on<MakeEditorFileActive>().listen((event) {
       setState(() {
         FocusScope.of(context).requestFocus(_focusNode);
-        changeActiveFile(Project.of(context).openFiles[event.file].fileLocation);
+        changeActiveFile(
+            Project.of(context).openFiles[event.file].fileLocation);
       });
     });
     _actionMap = <Type, Action<Intent>>{
@@ -168,7 +175,8 @@ class _EditorState extends State<Editor> {
         }
       }
       if (!controllers.containsKey(_curFile))
-        controllers[_curFile] = EditorController(model, model.openFiles[_curFile]);
+        controllers[_curFile] =
+            EditorController(model, model.openFiles[_curFile]);
       controller.makeActive();
 
       if (didUpdateDoc || controller.externalEdit) {
@@ -184,7 +192,8 @@ class _EditorState extends State<Editor> {
         child: Column(
           mainAxisSize: MainAxisSize.max,
           children: <Widget>[
-            EditorFilesHeader(focusNode: _focusNode, openFiles: openFiles, curFile: _curFile),
+            EditorFilesHeader(
+                focusNode: _focusNode, openFiles: openFiles, curFile: _curFile),
             Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -203,9 +212,11 @@ class _EditorState extends State<Editor> {
                             },
                             onPointerSignal: (signal) {
                               if (signal is PointerScrollEvent &&
-                                  (!Editor.cursorCapturedBySuggestions || completions.isEmpty)) {
+                                  (!Editor.cursorCapturedBySuggestions ||
+                                      completions.isEmpty)) {
                                 setState(() {
-                                  controllers[_curFile].scroll(Editor.editorSize, signal.scrollDelta);
+                                  controllers[_curFile].scroll(
+                                      Editor.editorSize, signal.scrollDelta);
                                 });
                               }
                             },
@@ -220,13 +231,15 @@ class _EditorState extends State<Editor> {
                                   suggestionStartDx: _findCStart(),
                                   callback: acceptSuggestion,
                                 ),
-                                painter: EditorUi(-(controller.scrollPosition ?? Offset.zero),
+                                painter: EditorUi(
+                                    -(controller.scrollPosition ?? Offset.zero),
                                     theme: testTheme,
                                     lines: lines,
                                     lineHeight: 16.0,
                                     callback: () {},
                                     cursor: controller.primaryCursor,
-                                    cursorBlink: _focusNode.hasFocus && cursorBlink),
+                                    cursorBlink:
+                                        _focusNode.hasFocus && cursorBlink),
                               ),
                             ),
                           ))),
@@ -242,7 +255,8 @@ class _EditorState extends State<Editor> {
   void changeActiveFile(String newActiveFile) {
     _curFile = newActiveFile;
     if (!controllers.containsKey(_curFile))
-      controllers[_curFile] = EditorController(Project.of(context), Project.of(context).openFiles[newActiveFile]);
+      controllers[_curFile] = EditorController(
+          Project.of(context), Project.of(context).openFiles[newActiveFile]);
     controller.makeActive();
   }
 
@@ -250,7 +264,10 @@ class _EditorState extends State<Editor> {
     if (completions.isEmpty) return _suggestionStart * 8.2 + 45;
     for (var cc in completions) {
       if (cc.textEdit != null) {
-        return cc.textEdit.range.start.character * 8.2 + 45;
+        return cc.textEdit.map((insert) => insert.range.start.character,
+                    (replace) => replace.insert.start.character) *
+                8.2 +
+            45;
       }
     }
     return _suggestionStart * 8.2 + 45;
@@ -260,8 +277,14 @@ class _EditorState extends State<Editor> {
     if (Editor.cursorCapturedBySuggestions && completions.isNotEmpty) return;
     final RenderBox getBox = context.findRenderObject();
     final local = getBox.globalToLocal(event.position);
-    final newCursor = EditorCursorUtil.calcNewCursor(event, lines, testTheme, -controllers[_curFile].scrollPosition.dy,
-        -controllers[_curFile].scrollPosition.dx, 16.0, local.translate(-45, -30));
+    final newCursor = EditorCursorUtil.calcNewCursor(
+        event,
+        lines,
+        testTheme,
+        -controllers[_curFile].scrollPosition.dy,
+        -controllers[_curFile].scrollPosition.dx,
+        16.0,
+        local.translate(-45, -30));
     setState(() {
       controller.primaryCursor = newCursor;
       completions = [];
@@ -275,13 +298,17 @@ class _EditorState extends State<Editor> {
 
   void updateMenus(EditorCursor newCursor) {
     MenuBarManager()
-      ..updateItem(MenuCategory.edit, 'undo', 'undo', enabled: controller.canUndo)
-      ..updateItem(MenuCategory.file, 'save', 'save', enabled: true, action: saveCurrentFile);
+      ..updateItem(MenuCategory.edit, 'undo', 'undo',
+          enabled: controller.canUndo)
+      ..updateItem(MenuCategory.file, 'save', 'save',
+          enabled: true, action: saveCurrentFile);
 
     if (newCursor.isSelection) {
       MenuBarManager()
-        ..updateItem(MenuCategory.edit, 'clipboard', 'cut', enabled: true, action: cut)
-        ..updateItem(MenuCategory.edit, 'clipboard', 'copy', enabled: true, action: _copy)
+        ..updateItem(MenuCategory.edit, 'clipboard', 'cut',
+            enabled: true, action: cut)
+        ..updateItem(MenuCategory.edit, 'clipboard', 'copy',
+            enabled: true, action: _copy)
         ..publish();
     } else {
       MenuBarManager()
@@ -319,14 +346,25 @@ class _EditorState extends State<Editor> {
     print('suggestion start: $_suggestionStart');
     var cur = controller.primaryCursor.copyWith(
         position: _suggestionStart - 1,
-        endPosition: lines[controller.primaryCursor.line].insertEnd(_suggestionStart - 1) - 1);
+        endPosition: lines[controller.primaryCursor.line]
+                .insertEnd(_suggestionStart - 1) -
+            1);
     var ctext = completion.insertText;
     print('suggestion is: $ctext');
     if (completion.textEdit != null) {
-      final start = completion.textEdit.range.start.character;
-      final end = completion.textEdit.range.end.character;
-      cur = EditorCursor(cur.line, cur.endLine, start, end);
-      ctext = completion.textEdit.newText ?? completion.insertText;
+      completion.textEdit.map((insert) {
+        final start = insert.range.start.character;
+        final end = insert.range.end.character;
+        cur = EditorCursor(cur.line, cur.endLine, start, end);
+        ctext = insert.newText ?? completion.insertText;
+        print('Recieved insert');
+      }, (replace) {
+        final start = replace.replace.start.character;
+        final end = replace.replace.end.character;
+        cur = EditorCursor(cur.line, cur.endLine, start, end);
+        ctext = replace.newText ?? completion.insertText;
+        print('Recieved range');
+      });
     }
 
     ctext ??= completion.label;
@@ -379,7 +417,9 @@ class _EditorState extends State<Editor> {
                 final newPos = cur.endPosition == 0 && cur.endLine > 0
                     ? file.lineLengths[cur.endLine - 1] - 1
                     : max(0, cur.endPosition - 1);
-                final newLine = cur.endPosition == 0 && cur.endLine > 0 ? cur.endLine - 1 : cur.endLine;
+                final newLine = cur.endPosition == 0 && cur.endLine > 0
+                    ? cur.endLine - 1
+                    : cur.endLine;
 
                 moveCursor(cur.copyWith(endLine: newLine, endPosition: newPos));
               } else if (cur.isSelection) {
@@ -393,20 +433,29 @@ class _EditorState extends State<Editor> {
                   handled = false;
                   return;
                 }
-                moveCursor(cur.copyWithSingle(line: cur.line - 1, position: lineLength(cur.line - 1)));
+                moveCursor(cur.copyWithSingle(
+                    line: cur.line - 1, position: lineLength(cur.line - 1)));
               } else
-                moveCursor(controller.primaryCursor.copyWithSingle(position: max(0, cur.position - 1)));
+                moveCursor(controller.primaryCursor
+                    .copyWithSingle(position: max(0, cur.position - 1)));
             } else if (keyCode == key_codes.right) {
               if (data.isModifierPressed(ModifierKey.shiftModifier)) {
-                final newPos =
-                    cur.endPosition == file.lineLengths[cur.endLine] - 1 && cur.endLine < file.lineLengths.length - 1
-                        ? 0
-                        : min(file.lineLengths[cur.endLine] - 1, cur.endPosition + 1);
+                final newPos = cur.endPosition ==
+                            file.lineLengths[cur.endLine] - 1 &&
+                        cur.endLine < file.lineLengths.length - 1
+                    ? 0
+                    : min(
+                        file.lineLengths[cur.endLine] - 1, cur.endPosition + 1);
                 final newLine =
-                    cur.endPosition == file.lineLengths[cur.endLine] - 1 && cur.endLine < file.lineLengths.length - 1
+                    cur.endPosition == file.lineLengths[cur.endLine] - 1 &&
+                            cur.endLine < file.lineLengths.length - 1
                         ? cur.endLine + 1
                         : cur.endLine;
-                moveCursor(cur.copyWith(line: cur.line, endLine: newLine, position: cur.position, endPosition: newPos));
+                moveCursor(cur.copyWith(
+                    line: cur.line,
+                    endLine: newLine,
+                    position: cur.position,
+                    endPosition: newPos));
                 return;
               }
               if (cur.position != cur.endPosition) {
@@ -424,19 +473,23 @@ class _EditorState extends State<Editor> {
               } else
                 moveCursor(cur.copyWithSingle(position: cur.position + 1));
             } else if (keyCode == key_codes.down) {
-              if (cur.line == lines.length - 1 && cur.endLine == lines.length - 1) {
+              if (cur.line == lines.length - 1 &&
+                  cur.endLine == lines.length - 1) {
                 handled = false;
                 return;
               }
               moveCursor(cur.copyWithSingle(
-                  line: min(cur.line + 1, lines.length - 1), position: min(cur.position, lineLength(cur.line + 1))));
+                  line: min(cur.line + 1, lines.length - 1),
+                  position: min(cur.position, lineLength(cur.line + 1))));
             } else if (keyCode == key_codes.up) {
               if (cur.line == 0 && cur.endLine == 0) {
                 handled = false;
                 return;
               }
               moveCursor(cur.copyWithSingle(
-                  line: max(cur.line - 1, 0), position: min(cur.position, lineLength(max(0, cur.line - 1)))));
+                  line: max(cur.line - 1, 0),
+                  position:
+                      min(cur.position, lineLength(max(0, cur.line - 1)))));
             } else {
               //Changeset ec;
 
@@ -451,12 +504,15 @@ class _EditorState extends State<Editor> {
                   if (cur.position > istart || cur.position == 0) {
                     didUpdateDoc = controller.removeLeft(1);
                   } else {
-                    final String prevLine = controller.file.document[cur.line - 1]['s'];
+                    final String prevLine =
+                        controller.file.document[cur.line - 1]['s'];
                     if (prevLine.trim().isEmpty) {
-                      final nc = EditorCursor(cur.line - 1, cur.line, prevLine.length - 1, istart);
+                      final nc = EditorCursor(
+                          cur.line - 1, cur.line, prevLine.length - 1, istart);
                       didUpdateDoc = controller.deleteAt(nc);
                     } else {
-                      final nc = EditorCursor(cur.line - 1, cur.line, prevLine.length - 1, istart);
+                      final nc = EditorCursor(
+                          cur.line - 1, cur.line, prevLine.length - 1, istart);
                       didUpdateDoc = controller.deleteAt(nc);
                     }
                   }
@@ -467,13 +523,20 @@ class _EditorState extends State<Editor> {
                 print(controller.file.document[cur.firstLine]['s']);
                 final lChar = cur.firstPosition == 0
                     ? ''
-                    : controller.file.document[cur.firstLine]['s'].substring(cur.firstPosition - 1, cur.firstPosition);
+                    : controller.file.document[cur.firstLine]['s']
+                        .substring(cur.firstPosition - 1, cur.firstPosition);
                 print('lc $lChar');
-                final indentChange = (lChar == '{' || lChar == '(' || lChar == '.' || lChar == '[') ? 1 : 0;
+                final indentChange = (lChar == '{' ||
+                        lChar == '(' ||
+                        lChar == '.' ||
+                        lChar == '[')
+                    ? 1
+                    : 0;
                 print('ic $indentChange');
-                final indent =
-                    (iData.indent.substring(0, 1) * iStart).substring(indentChange == -1 ? iData.indent.length : 0) +
-                        (indentChange == 1 ? iData.indent : '');
+                final indent = (iData.indent.substring(0, 1) * iStart)
+                        .substring(
+                            indentChange == -1 ? iData.indent.length : 0) +
+                    (indentChange == 1 ? iData.indent : '');
                 didUpdateDoc = controller.insert('\n$indent');
                 _hasMovedCursor = true;
               } else if (keyCode == key_codes.tab) {
@@ -482,8 +545,10 @@ class _EditorState extends State<Editor> {
                 if (data.isModifierPressed(ModifierKey.shiftModifier)) {
                   final iStart = lines[cur.firstLine].indentStart();
                   if (iStart >= controller.file.indentData.amount) {
-                    final cur = controller.primaryCursor.copyWithSingle(position: iStart);
-                    didUpdateDoc = controller.removeLeftAt(cur, controller.file.indentData.amount);
+                    final cur = controller.primaryCursor
+                        .copyWithSingle(position: iStart);
+                    didUpdateDoc = controller.removeLeftAt(
+                        cur, controller.file.indentData.amount);
                   }
                 } else
                   didUpdateDoc = controller.insert(idata.indent);
@@ -512,7 +577,8 @@ class _EditorState extends State<Editor> {
 
                 if (!didComplete) {
                   _suggestionStart = lines[controller.primaryCursor.firstLine]
-                      .suggestionStart(controller.primaryCursor.firstPosition - 1);
+                      .suggestionStart(
+                          controller.primaryCursor.firstPosition - 1);
                   completeLen = 0;
                 }
                 completeLen++;
@@ -535,7 +601,10 @@ class _EditorState extends State<Editor> {
 
   void codeComplete(String triggerChar) async {
     final _completions = await DartAnalyzer().completeChar(
-        triggerChar, _curFile, controller.primaryCursor.firstLine, controller.primaryCursor.firstPosition);
+        triggerChar,
+        _curFile,
+        controller.primaryCursor.firstLine,
+        controller.primaryCursor.firstPosition);
     if (_completions != null)
       setState(() {
         completions = _completions;
@@ -574,14 +643,17 @@ class EditorFilesHeader extends StatelessWidget {
     var i = 0;
     var _find = 0;
     return Material(
-      color: _focusNode.hasFocus ? IdeTheme.of(context).windowHeaderActive.col : IdeTheme.of(context).windowHeader.col,
+      color: _focusNode.hasFocus
+          ? IdeTheme.of(context).windowHeaderActive.col
+          : IdeTheme.of(context).windowHeader.col,
       child: Row(
         children: openFiles.values.map((file) {
           if (file.fileLocation == _curFile) _find = i;
           i++;
           return Material(
-            color:
-                file.fileLocation == _curFile ? testTheme.backgroundColor : IdeTheme.of(context).windowHeaderActive.col,
+            color: file.fileLocation == _curFile
+                ? testTheme.backgroundColor
+                : IdeTheme.of(context).windowHeaderActive.col,
             child: InkWell(
               focusNode: FocusNode(skipTraversal: true),
               onTap: () {
@@ -603,12 +675,15 @@ class EditorFilesHeader extends StatelessWidget {
                       onPressed: () {
                         Project.of(context).closeFile(file.fileLocation);
                         if (_curFile == file.fileLocation) {
-                          eventBus.fire(MakeEditorFileActive(openFiles.values.toList()[_find - 1].fileLocation));
+                          eventBus.fire(MakeEditorFileActive(openFiles.values
+                              .toList()[_find - 1]
+                              .fileLocation));
                         }
                       },
                     ),
                     Padding(
-                      padding: EdgeInsets.only(top: 4.0, bottom: 4.0, left: 2.0, right: 3.0),
+                      padding: EdgeInsets.only(
+                          top: 4.0, bottom: 4.0, left: 2.0, right: 3.0),
                       child: Text(
                         file.fileName,
                         style: TextStyle(color: testTheme.baseStyle.color),

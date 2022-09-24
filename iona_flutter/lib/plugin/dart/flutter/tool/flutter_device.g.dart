@@ -30,28 +30,33 @@ class _$FlutterDeviceSerializer implements StructuredSerializer<FlutterDevice> {
       serializers.serialize(object.emulator,
           specifiedType: const FullType(bool)),
     ];
-    if (object.category != null) {
+    Object value;
+    value = object.category;
+    if (value != null) {
       result
         ..add('category')
-        ..add(serializers.serialize(object.category,
+        ..add(serializers.serialize(value,
             specifiedType: const FullType(String)));
     }
-    if (object.platformType != null) {
+    value = object.platformType;
+    if (value != null) {
       result
         ..add('platformType')
-        ..add(serializers.serialize(object.platformType,
+        ..add(serializers.serialize(value,
             specifiedType: const FullType(String)));
     }
-    if (object.ephemeral != null) {
+    value = object.ephemeral;
+    if (value != null) {
       result
         ..add('ephemeral')
-        ..add(serializers.serialize(object.ephemeral,
-            specifiedType: const FullType(bool)));
+        ..add(
+            serializers.serialize(value, specifiedType: const FullType(bool)));
     }
-    if (object.emulatorId != null) {
+    value = object.emulatorId;
+    if (value != null) {
       result
         ..add('emulatorId')
-        ..add(serializers.serialize(object.emulatorId,
+        ..add(serializers.serialize(value,
             specifiedType: const FullType(String)));
     }
     return result;
@@ -67,7 +72,7 @@ class _$FlutterDeviceSerializer implements StructuredSerializer<FlutterDevice> {
     while (iterator.moveNext()) {
       final key = iterator.current as String;
       iterator.moveNext();
-      final dynamic value = iterator.current;
+      final Object value = iterator.current;
       switch (key) {
         case 'id':
           result.id = serializers.deserialize(value,
@@ -139,18 +144,12 @@ class _$FlutterDevice extends FlutterDevice {
       this.ephemeral,
       this.emulatorId})
       : super._() {
-    if (id == null) {
-      throw new BuiltValueNullFieldError('FlutterDevice', 'id');
-    }
-    if (name == null) {
-      throw new BuiltValueNullFieldError('FlutterDevice', 'name');
-    }
-    if (platform == null) {
-      throw new BuiltValueNullFieldError('FlutterDevice', 'platform');
-    }
-    if (emulator == null) {
-      throw new BuiltValueNullFieldError('FlutterDevice', 'emulator');
-    }
+    BuiltValueNullFieldError.checkNotNull(id, 'FlutterDevice', 'id');
+    BuiltValueNullFieldError.checkNotNull(name, 'FlutterDevice', 'name');
+    BuiltValueNullFieldError.checkNotNull(
+        platform, 'FlutterDevice', 'platform');
+    BuiltValueNullFieldError.checkNotNull(
+        emulator, 'FlutterDevice', 'emulator');
   }
 
   @override
@@ -244,15 +243,16 @@ class FlutterDeviceBuilder
   FlutterDeviceBuilder();
 
   FlutterDeviceBuilder get _$this {
-    if (_$v != null) {
-      _id = _$v.id;
-      _name = _$v.name;
-      _platform = _$v.platform;
-      _emulator = _$v.emulator;
-      _category = _$v.category;
-      _platformType = _$v.platformType;
-      _ephemeral = _$v.ephemeral;
-      _emulatorId = _$v.emulatorId;
+    final $v = _$v;
+    if ($v != null) {
+      _id = $v.id;
+      _name = $v.name;
+      _platform = $v.platform;
+      _emulator = $v.emulator;
+      _category = $v.category;
+      _platformType = $v.platformType;
+      _ephemeral = $v.ephemeral;
+      _emulatorId = $v.emulatorId;
       _$v = null;
     }
     return this;
@@ -260,9 +260,7 @@ class FlutterDeviceBuilder
 
   @override
   void replace(FlutterDevice other) {
-    if (other == null) {
-      throw new ArgumentError.notNull('other');
-    }
+    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$FlutterDevice;
   }
 
@@ -275,10 +273,14 @@ class FlutterDeviceBuilder
   _$FlutterDevice build() {
     final _$result = _$v ??
         new _$FlutterDevice._(
-            id: id,
-            name: name,
-            platform: platform,
-            emulator: emulator,
+            id: BuiltValueNullFieldError.checkNotNull(
+                id, 'FlutterDevice', 'id'),
+            name: BuiltValueNullFieldError.checkNotNull(
+                name, 'FlutterDevice', 'name'),
+            platform: BuiltValueNullFieldError.checkNotNull(
+                platform, 'FlutterDevice', 'platform'),
+            emulator: BuiltValueNullFieldError.checkNotNull(
+                emulator, 'FlutterDevice', 'emulator'),
             category: category,
             platformType: platformType,
             ephemeral: ephemeral,
@@ -288,4 +290,4 @@ class FlutterDeviceBuilder
   }
 }
 
-// ignore_for_file: always_put_control_body_on_new_line,always_specify_types,annotate_overrides,avoid_annotating_with_dynamic,avoid_as,avoid_catches_without_on_clauses,avoid_returning_this,lines_longer_than_80_chars,omit_local_variable_types,prefer_expression_function_bodies,sort_constructors_first,test_types_in_equals,unnecessary_const,unnecessary_new
+// ignore_for_file: always_put_control_body_on_new_line,always_specify_types,annotate_overrides,avoid_annotating_with_dynamic,avoid_as,avoid_catches_without_on_clauses,avoid_returning_this,deprecated_member_use_from_same_package,lines_longer_than_80_chars,omit_local_variable_types,prefer_expression_function_bodies,sort_constructors_first,test_types_in_equals,unnecessary_const,unnecessary_new

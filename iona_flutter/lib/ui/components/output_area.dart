@@ -4,6 +4,7 @@ import 'package:devtools_app/devtools.dart' as dt;
 import 'package:flutter/material.dart';
 import 'package:iona_flutter/model/ide/project.dart';
 import 'package:iona_flutter/model/ide/tasks.dart';
+import 'package:iona_flutter/ui/components/devtools.dart';
 import 'package:iona_flutter/ui/components/terminal.dart';
 import 'package:iona_flutter/ui/design/inline_window.dart';
 import 'package:iona_flutter/util/strings/detect_indents.dart';
@@ -23,20 +24,27 @@ class _OutputAreaState extends State<OutputArea> {
   @override
   void initState() {
     super.initState();
-    dt.initDevTools().then((_p) {
-      setState(() {
-        prefs = _p;
-      });
-    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (prefs == null) {
+      final dtIdeTheme = dt.IdeTheme(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          embed: true);
+
+      dt.initDevTools(dtIdeTheme).then((_p) {
+        setState(() {
+          prefs = _p;
+        });
+      });
+    }
+
     final displayedW = tab == -1
         ? null
         : (tab == 0
             ? Terminal(
-                active: false,
+                active: true,
                 height: height,
                 constraintsCallback: (delta) {
                   setState(() {
@@ -70,31 +78,20 @@ class _OutputAreaState extends State<OutputArea> {
                       });
                     },
                   )
-                : (prefs != null
-                    ? InlineWindow(
-                        constraints: BoxConstraints.tightFor(height: height),
-                        constraintsCallback: (delta) {
-                          setState(() {
-                            height -= delta.dy;
-                            height = max(height, 190.0);
-                          });
-                        },
-                        header: Text('Dart DevTools'),
-                        resizeTop: true,
-                        onCollapse: () {
-                          setState(() {
-                            tab = -1;
-                          });
-                        },
-                        child: dt.DevToolsApp(
-                            dt.defaultScreens,
-                            prefs,
-                            dt.IdeTheme(
-                                backgroundColor: Colors.blueGrey[700],
-                                foregroundColor: Colors.blueGrey[100],
-                                fontSize: 12.0),
-                            dt.provider))
-                    : Container())));
+                : Devtools(
+                    height: height,
+                    constraintsCallback: (delta) {
+                      setState(() {
+                        height -= delta.dy;
+                        height = max(height, 190.0);
+                      });
+                    },
+                    onCollapse: () {
+                      setState(() {
+                        tab = -1;
+                      });
+                    },
+                  )));
 
     final tabBar = Row(children: [
       Expanded(
@@ -144,16 +141,21 @@ class _OutputAreaState extends State<OutputArea> {
                     child: Container(),
                   ),
                   if (project.activeProjectFile != null)
-                    Text((project.activeProjectFile.lineTerminatorFormat == LineTerminatorFormat.CRLF ? 'CRLF' : 'LF') +
+                    Text((project.activeProjectFile.lineTerminatorFormat ==
+                                LineTerminatorFormat.CRLF
+                            ? 'CRLF'
+                            : 'LF') +
                         '   ' +
-                        (project.activeProjectFile.indentData.type == IndentType.TABS
+                        (project.activeProjectFile.indentData.type ==
+                                IndentType.TABS
                             ? 'Tabs'
                             : '${project.activeProjectFile.indentData.amount} spaces')),
                   if (model.isRunning('dart', 'analyze')) ...[
                     Padding(
                       padding: const EdgeInsets.only(left: 12.0, right: 4.0),
                       child: ConstrainedBox(
-                        constraints: BoxConstraints.tightFor(height: 12.0, width: 12.0),
+                        constraints:
+                            BoxConstraints.tightFor(height: 12.0, width: 12.0),
                         child: CircularProgressIndicator(
                           strokeWidth: 2.0,
                         ),
@@ -212,7 +214,9 @@ class OutputTab extends StatelessWidget {
                 size: 18,
                 color: selected ? Colors.blueGrey[900] : null,
               ),
-              Text('  $name', style: selected ? TextStyle(color: Colors.blueGrey[900]) : null),
+              Text('  $name',
+                  style:
+                      selected ? TextStyle(color: Colors.blueGrey[900]) : null),
             ],
           ),
         ),

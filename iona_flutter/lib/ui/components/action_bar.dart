@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:iona_flutter/model/event/global_events.dart';
 import 'package:iona_flutter/model/ide/project.dart';
 import 'package:iona_flutter/model/ide/run_configs.dart';
+import 'package:iona_flutter/plugin/plugin.dart';
 import 'package:iona_flutter/ui/design/custom_iconbutton.dart';
 import 'package:iona_flutter/ui/design/desktop_dropdown.dart';
 import 'package:scoped_model/scoped_model.dart';
@@ -112,7 +113,12 @@ class _ActionBarState extends State<ActionBar> {
                               ? Colors.lightGreenAccent[200]
                               : Colors.grey[500],
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          if (configs.activeRunTarget != RunTarget.none) {
+                            Plugin.byId(configs.activeRunConfig.pluginId).launchProgram(PluginInterface(context),
+                                configs.activeRunConfig, configs.activeRunTarget, LaunchMode.RUN);
+                          }
+                        },
                         iconSize: 24,
                       ),
                       CustomIconButton(
@@ -132,7 +138,6 @@ class _ActionBarState extends State<ActionBar> {
                           size: 20,
                         ),
                         onPressed: () {
-                          print('qqqq');
                           showDialog(
                               context: context,
                               builder: (ctx) {
@@ -141,8 +146,8 @@ class _ActionBarState extends State<ActionBar> {
                                   constraints: BoxConstraints.tight(Size(900, 700)),
                                   child: ld.LicensePage(
                                     applicationName: 'Iona',
-                                    applicationVersion: '0.0.1',
-                                    applicationLegalese: '\u00a9 2020 Ethan Elshyeb',
+                                    applicationVersion: '0.1.0',
+                                    applicationLegalese: '\u00a9 ${DateTime.now().year} ethanblake4',
                                   ),
                                 ));
                               });
@@ -165,12 +170,4 @@ class _ActionBarState extends State<ActionBar> {
     super.dispose();
     _fileActiveSubscription.cancel();
   }
-}
-
-extension on double {
-  bool isCloseTo(double other) => this + 0.001 > other + 0.001 && this - 0.001 < other - 0.001;
-}
-
-extension on Offset {
-  bool isCloseTo(Offset other) => dx.isCloseTo(other.dx) && dy.isCloseTo(other.dy);
 }

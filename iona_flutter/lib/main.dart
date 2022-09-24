@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:iona_flutter/model/ide/run_configs.dart';
 import 'package:iona_flutter/model/ide/tasks.dart';
-import 'package:iona_flutter/plugin/dart/flutter/ui_editor/flutter_ui_editor.dart';
+import 'package:iona_flutter/plugin/plugin.dart';
 import 'package:iona_flutter/ui/components/action_bar.dart';
 import 'package:iona_flutter/ui/components/output_area.dart';
 import 'package:iona_flutter/ui/components/project_browser.dart';
@@ -18,14 +18,16 @@ import 'model/ide/ide_theme.dart';
 import 'model/ide/project.dart';
 
 void main() {
-  var dir = Directory('./Iona');
+  var dir = Directory('./iona');
   if (!dir.existsSync()) {
     dir.createSync();
-    File('./Iona/welcome.txt')
+    File('./iona/welcome.txt')
       ..createSync()
-      ..writeAsStringSync('Welcome to Iona!\n\nTo get started, choose File > Open from the menu.\n');
+      ..writeAsStringSync(
+          'Welcome to Iona!\n\nTo get started, choose File > Open from the menu.\n');
   }
 
+  Plugin.allPlugins.forEach((plugin) => plugin.init());
   runApp(IonaApp());
 }
 
@@ -48,48 +50,50 @@ class _IonaAppState extends State<IonaApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ScopedModel(
-        model: _projectModel,
-        child: ScopedModel(
-          model: _tasksModel,
-          child: ScopedModel(
-            model: _runconfigsModel,
-            child: ScopedModel(
-              model: _themeModel,
-              child: ScopedModelDescendant<IdeTheme>(builder: (context, widget, model) {
-                return MaterialApp(
-                  debugShowCheckedModeBanner: false,
-                  theme: ThemeData(
-                      colorScheme: ColorScheme.dark(surface: Colors.blueGrey, background: Colors.blueGrey),
-                      brightness: Brightness.dark,
-                      scaffoldBackgroundColor: Color(0xFF37434F),
-                      primarySwatch: Colors.blue,
-                      iconTheme: IconThemeData(color: IdeTheme.of(context).text.col),
-                      fontFamily: 'Roboto',
-                      textButtonTheme: TextButtonThemeData(
-                          style: ButtonStyle(
-                              visualDensity: VisualDensity.adaptivePlatformDensity,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              minimumSize: ButtonStyleButton.allOrNull(Size(0, 0)),
-                              padding: ButtonStyleButton.allOrNull(EdgeInsets.all(2)),
-                              textStyle: ButtonStyleButton.allOrNull(TextStyle(fontWeight: FontWeight.normal)),
-                              foregroundColor: ButtonStyleButton.allOrNull(Colors.white))),
-                      textTheme: TextTheme(
-                        bodyText2: TextStyle(color: IdeTheme.of(context).text.col, fontSize: 12.0),
-                        bodyText1: TextStyle(color: IdeTheme.of(context).textActive.col, fontSize: 12.0),
-                      )),
-                  builder: (context, child) => MediaQuery(
-                      data: MediaQuery.of(context).copyWith(viewPadding: EdgeInsets.only(top: 80)),
-                      child: dt.Notifications(
-                        child: child,
-                      )),
-                  home: IonaHome(title: 'Iona'),
-                  shortcuts: {...WidgetsApp.defaultShortcuts},
-                );
-              }),
-            ),
-          ),
-        ));
+    Widget app =
+        ScopedModelDescendant<IdeTheme>(builder: (context, widget, model) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+            colorScheme: ColorScheme.dark(
+                surface: Colors.blueGrey, background: Colors.blueGrey),
+            brightness: Brightness.dark,
+            scaffoldBackgroundColor: Color(0xFF37434F),
+            primarySwatch: Colors.blue,
+            iconTheme: IconThemeData(color: IdeTheme.of(context).text.col),
+            fontFamily: 'Roboto',
+            textButtonTheme: TextButtonThemeData(
+                style: ButtonStyle(
+                    visualDensity: VisualDensity.adaptivePlatformDensity,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    minimumSize: ButtonStyleButton.allOrNull(Size(0, 0)),
+                    padding: ButtonStyleButton.allOrNull(EdgeInsets.all(2)),
+                    textStyle: ButtonStyleButton.allOrNull(
+                        TextStyle(fontWeight: FontWeight.normal)),
+                    foregroundColor:
+                        ButtonStyleButton.allOrNull(Colors.white))),
+            textTheme: TextTheme(
+              bodyText2: TextStyle(
+                  color: IdeTheme.of(context).text.col, fontSize: 12.0),
+              bodyText1: TextStyle(
+                  color: IdeTheme.of(context).textActive.col, fontSize: 12.0),
+            )),
+        builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(viewPadding: EdgeInsets.only(top: 80)),
+            child: dt.Notifications(
+              child: child,
+            )),
+        home: IonaHome(title: 'Iona'),
+        shortcuts: {...WidgetsApp.defaultShortcuts},
+      );
+    });
+
+    app = ScopedModel(model: _themeModel, child: app);
+    app = ScopedModel(model: _runconfigsModel, child: app);
+    app = ScopedModel(model: _tasksModel, child: app);
+
+    return ScopedModel(model: _projectModel, child: app);
   }
 }
 
@@ -110,16 +114,23 @@ class _IonaHomeState extends State<IonaHome> {
   @override
   void initState() {
     super.initState();
+
     setupBaseMenus(context);
     if (Project.of(context).openFiles.isEmpty) {
-      Project.of(context).rootFolder = './Iona';
-      Project.of(context).openFile('./Iona/welcome.txt');
+      Project.of(context).rootFolder = './iona';
+      Project.of(context).openFile('./iona/welcome.txt');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    ScreenUtil.init(context);
+    ScreenUtil.init(
+        BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width,
+            maxHeight: MediaQuery.of(context).size.height),
+        designSize: Size(640, 480),
+        orientation: Orientation.landscape);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         return Column(children: [
@@ -133,7 +144,7 @@ class _IonaHomeState extends State<IonaHome> {
                 Expanded(
                   child: Editor(),
                 ),
-                FlutterUiEditor(),
+                //FlutterUiEditor(),
               ],
             ),
           ),

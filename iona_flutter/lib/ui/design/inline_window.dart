@@ -18,6 +18,7 @@ class InlineWindow extends StatefulWidget {
       this.resizeLeft = false,
       this.resizeBottom = false,
       this.resizeTop = false,
+      this.headerVerticalPadding = 5.0,
       this.onCollapse,
       this.constraintsCallback})
       : super(key: key);
@@ -30,6 +31,7 @@ class InlineWindow extends StatefulWidget {
   final bool resizeLeft;
   final bool resizeRight;
   final bool resizeBottom;
+  final double headerVerticalPadding;
   final VoidCallback onCollapse;
   final ModifyConstraintsCallback constraintsCallback;
 
@@ -50,12 +52,14 @@ class InlineWindowState extends State<InlineWindow> {
   @override
   void initState() {
     super.initState();
-    _focusNode.addListener(() {
-      setState(() {});
-    });
+    _focusNode.addListener(focusState);
     if (widget.requestFocus) {
       _focusNode.requestFocus();
     }
+  }
+
+  void focusState() {
+    setState(() {});
   }
 
   bool get hasFocus => _focusNode.hasFocus;
@@ -69,9 +73,9 @@ class InlineWindowState extends State<InlineWindow> {
   Widget build(BuildContext context) {
     final header = widget.onCollapse != null
         ? Row(
+            mainAxisSize: MainAxisSize.max,
             children: [
-              widget.header,
-              Expanded(child: Container()),
+              Expanded(child: widget.header),
               CustomIconButton(
                 icon: Icon(Icons.minimize),
                 onPressed: widget.onCollapse,
@@ -81,6 +85,24 @@ class InlineWindowState extends State<InlineWindow> {
             ],
           )
         : widget.header;
+
+    final inlineContent = Column(children: [
+      Row(children: <Widget>[
+        Expanded(
+          child: Material(
+              color: _focusNode.hasFocus
+                  ? IdeTheme.of(context).windowHeaderActive.col
+                  : IdeTheme.of(context).windowHeader.col,
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                    horizontal: 8.0, vertical: widget.headerVerticalPadding),
+                child: header,
+              )),
+        ),
+      ]),
+      Expanded(child: widget.child)
+    ]);
+
     return _InlineWindow(
       data: this,
       child: ConstrainedBox(
@@ -95,28 +117,19 @@ class InlineWindowState extends State<InlineWindow> {
                   }
                 },
                 behavior: HitTestBehavior.translucent,
-                child: RawKeyboardListener(
-                    focusNode: _focusNode,
-                    onKey: widget.onKey,
-                    child: Column(children: [
-                      Row(children: <Widget>[
-                        Expanded(
-                          child: Material(
-                              color: _focusNode.hasFocus
-                                  ? IdeTheme.of(context).windowHeaderActive.col
-                                  : IdeTheme.of(context).windowHeader.col,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 5.0),
-                                child: header,
-                              )),
-                        ),
-                      ]),
-                      Expanded(child: widget.child)
-                    ]))),
+                child: widget.onKey == null
+                    ? inlineContent
+                    : RawKeyboardListener(
+                        focusNode: _focusNode,
+                        onKey: widget.onKey,
+                        child: inlineContent)),
             if (widget.resizeLeft)
               ConstrainedBox(
-                  constraints:
-                      BoxConstraints(minWidth: 3, maxWidth: 3, minHeight: double.infinity, maxHeight: double.infinity),
+                  constraints: BoxConstraints(
+                      minWidth: 3,
+                      maxWidth: 3,
+                      minHeight: double.infinity,
+                      maxHeight: double.infinity),
                   child: resizer()),
             if (widget.resizeRight)
               Row(
@@ -124,14 +137,20 @@ class InlineWindowState extends State<InlineWindow> {
                   Expanded(child: Container()),
                   ConstrainedBox(
                       constraints: BoxConstraints(
-                          minWidth: 3, maxWidth: 3, minHeight: double.infinity, maxHeight: double.infinity),
+                          minWidth: 3,
+                          maxWidth: 3,
+                          minHeight: double.infinity,
+                          maxHeight: double.infinity),
                       child: resizer()),
                 ],
               ),
             if (widget.resizeTop)
               ConstrainedBox(
-                  constraints:
-                      BoxConstraints(minWidth: double.infinity, maxWidth: double.infinity, minHeight: 3, maxHeight: 3),
+                  constraints: BoxConstraints(
+                      minWidth: double.infinity,
+                      maxWidth: double.infinity,
+                      minHeight: 3,
+                      maxHeight: 3),
                   child: resizer(true)),
           ],
         ),
@@ -141,14 +160,18 @@ class InlineWindowState extends State<InlineWindow> {
 
   Widget resizer([bool vertical = false]) {
     return MouseRegion(
-      cursor: vertical ? SystemMouseCursors.resizeUpDown : SystemMouseCursors.resizeLeftRight,
+      cursor: vertical
+          ? SystemMouseCursors.resizeUpDown
+          : SystemMouseCursors.resizeLeftRight,
       child: Listener(
         onPointerDown: (evt) {
           clickDragPtr = evt.pointer;
         },
         onPointerMove: (evt) {
-          if (evt.pointer == clickDragPtr && widget.constraintsCallback != null) {
-            widget.constraintsCallback(vertical ? Offset(0, evt.delta.dy) : Offset(evt.delta.dx, 0));
+          if (evt.pointer == clickDragPtr &&
+              widget.constraintsCallback != null) {
+            widget.constraintsCallback(
+                vertical ? Offset(0, evt.delta.dy) : Offset(evt.delta.dx, 0));
           }
         },
         onPointerUp: (evt) {
@@ -162,13 +185,21 @@ class InlineWindowState extends State<InlineWindow> {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(focusState);
+    _focusNode.dispose();
+    super.dispose();
+  }
 }
 
 /// Only has MyInheritedState as field.
 class _InlineWindow extends InheritedWidget {
   final InlineWindowState data;
 
-  _InlineWindow({Key key, this.data, Widget child}) : super(key: key, child: child);
+  _InlineWindow({Key key, this.data, Widget child})
+      : super(key: key, child: child);
 
   @override
   bool updateShouldNotify(_InlineWindow old) {

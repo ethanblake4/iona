@@ -1,0 +1,140 @@
+name: iona_flutter
+description: A code editor built in Flutter.
+
+environment:
+  sdk: '>=2.9.0 <3.0.0'
+  flutter: '>=1.20.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dartx:
+  analysis_server_lib:
+  built_value:
+  built_collection:
+  scoped_model: ^1.0.1
+  event_bus: ^1.1.0
+  flutter_screenutil:
+  xterm: ^2.4.0-pre
+  pty: ^0.2.2-pre
+  pedantic:
+  sembast:
+  isolate:
+  yaml:
+  equatable:
+  dart_style:
+  piecemeal: any
+  cupertino_icons: ^0.1.0
+  analyzer_plugin:
+  analysis_server:
+    path: ../sdk/pkg/analysis_server
+  analyzer:
+  selection_menu: ^0.9.0
+  catex:
+
+  devtools_app:
+    path: ../devtools/packages/devtools_app
+  cyclop:
+    path: ../cyclop/
+  dart_eval:
+    path: ../dart_eval/
+
+
+  # Desktop embedder plugins.
+  # Note: In an actual project, these paths would include the
+  # path from your application to the flutter_desktop_embedding
+  # checkout.
+  color_panel:
+    path: ../plugins/color_panel
+  file_selector:
+  file_selector_macos: ^0.0.3
+  file_selector_linux: ^0.0.2
+  file_selector_windows: ^0.0.2
+  menubar:
+    git:
+      url: git://github.com/google/flutter-desktop-embedding.git
+      path: plugins/menubar
+      ref: 85dde09b702a0cb1f5e1392d2f030bdc3d4e5be3
+  window_size:
+    git:
+      url: git://github.com/google/flutter-desktop-embedding.git
+      path: plugins/window_size
+      ref: e48abe7c3e9ebfe0b81622167c5201d4e783bb81
+  path_provider: ^2.0.2
+  shared_preferences: ^2.0.6
+  url_launcher: ^5.4.0
+  url_launcher_fde:
+    path: ../plugins/flutter_plugins/url_launcher_fde
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  build_runner:
+
+dependency_overrides:
+  meta:
+  http: ^0.13.0
+  usage: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - nativeLibs/libvterm.dylib
+    - nativeLibs/libvterm.0.dylib
+    - nativeLibs/libvterm.a
+    - nativeLibs/libvterm.lai
+    - assets/icons/dart.png
+
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: fonts/Roboto/Roboto-Thin.ttf
+          weight: 100
+        - asset: fonts/Roboto/Roboto-Light.ttf
+          weight: 300
+        - asset: fonts/Roboto/Roboto-Regular.ttf
+          weight: 400
+        - asset: fonts/Roboto/Roboto-Medium.ttf
+          weight: 500
+        - asset: fonts/Roboto/Roboto-Bold.ttf
+          weight: 700
+        - asset: fonts/Roboto/Roboto-Black.ttf
+          weight: 900
+
+    - family: OfficeCodePro
+      fonts:
+        - asset: fonts/OfficeCodePro/OfficeCodePro-Light.otf
+          weight: 300
+        - asset: fonts/OfficeCodePro/OfficeCodePro-LightItalic.otf
+          weight: 300
+          style: italic
+        - asset: fonts/OfficeCodePro/OfficeCodePro-Regular.otf
+          weight: 400
+        - asset: fonts/OfficeCodePro/OfficeCodePro-RegularItalic.otf
+          weight: 400
+          style: italic
+        - asset: fonts/OfficeCodePro/OfficeCodePro-Medium.otf
+          weight: 500
+        - asset: fonts/OfficeCodePro/OfficeCodePro-MediumItalic.otf
+          weight: 500
+          style: italic
+        - asset: fonts/OfficeCodePro/OfficeCodePro-Bold.otf
+          weight: 700
+        - asset: fonts/OfficeCodePro/OfficeCodePro-BoldItalic.otf
+          weight: 700
+          style: italic
+    - family: Hack
+      fonts:
+        - asset: fonts/Hack/Hack-Regular.ttf
+          weight: 400
+        - asset: fonts/Hack/Hack-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: fonts/Hack/Hack-Bold.ttf
+          weight: 700
+        - asset: fonts/Hack/Hack-BoldItalic.ttf
+          weight: 700
+          style: italic
+    - family: Cascadia
+      fonts:
+        - asset: fonts/Cascadia/CascadiaMono.ttf

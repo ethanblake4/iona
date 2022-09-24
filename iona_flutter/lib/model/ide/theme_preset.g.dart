@@ -52,7 +52,7 @@ class _$ThemePresetSerializer implements StructuredSerializer<ThemePreset> {
     while (iterator.moveNext()) {
       final key = iterator.current as String;
       iterator.moveNext();
-      final dynamic value = iterator.current;
+      final Object value = iterator.current;
       switch (key) {
         case 'projectBrowserBackground':
           result.projectBrowserBackground = serializers.deserialize(value,
@@ -117,28 +117,19 @@ class _$ThemePreset extends ThemePreset {
       this.windowHeaderActive,
       this.fileTreeSelectedFile})
       : super._() {
-    if (projectBrowserBackground == null) {
-      throw new BuiltValueNullFieldError(
-          'ThemePreset', 'projectBrowserBackground');
-    }
-    if (termBackground == null) {
-      throw new BuiltValueNullFieldError('ThemePreset', 'termBackground');
-    }
-    if (text == null) {
-      throw new BuiltValueNullFieldError('ThemePreset', 'text');
-    }
-    if (textActive == null) {
-      throw new BuiltValueNullFieldError('ThemePreset', 'textActive');
-    }
-    if (windowHeader == null) {
-      throw new BuiltValueNullFieldError('ThemePreset', 'windowHeader');
-    }
-    if (windowHeaderActive == null) {
-      throw new BuiltValueNullFieldError('ThemePreset', 'windowHeaderActive');
-    }
-    if (fileTreeSelectedFile == null) {
-      throw new BuiltValueNullFieldError('ThemePreset', 'fileTreeSelectedFile');
-    }
+    BuiltValueNullFieldError.checkNotNull(
+        projectBrowserBackground, 'ThemePreset', 'projectBrowserBackground');
+    BuiltValueNullFieldError.checkNotNull(
+        termBackground, 'ThemePreset', 'termBackground');
+    BuiltValueNullFieldError.checkNotNull(text, 'ThemePreset', 'text');
+    BuiltValueNullFieldError.checkNotNull(
+        textActive, 'ThemePreset', 'textActive');
+    BuiltValueNullFieldError.checkNotNull(
+        windowHeader, 'ThemePreset', 'windowHeader');
+    BuiltValueNullFieldError.checkNotNull(
+        windowHeaderActive, 'ThemePreset', 'windowHeaderActive');
+    BuiltValueNullFieldError.checkNotNull(
+        fileTreeSelectedFile, 'ThemePreset', 'fileTreeSelectedFile');
   }
 
   @override
@@ -229,14 +220,15 @@ class ThemePresetBuilder implements Builder<ThemePreset, ThemePresetBuilder> {
   ThemePresetBuilder();
 
   ThemePresetBuilder get _$this {
-    if (_$v != null) {
-      _projectBrowserBackground = _$v.projectBrowserBackground;
-      _termBackground = _$v.termBackground;
-      _text = _$v.text;
-      _textActive = _$v.textActive;
-      _windowHeader = _$v.windowHeader;
-      _windowHeaderActive = _$v.windowHeaderActive;
-      _fileTreeSelectedFile = _$v.fileTreeSelectedFile;
+    final $v = _$v;
+    if ($v != null) {
+      _projectBrowserBackground = $v.projectBrowserBackground;
+      _termBackground = $v.termBackground;
+      _text = $v.text;
+      _textActive = $v.textActive;
+      _windowHeader = $v.windowHeader;
+      _windowHeaderActive = $v.windowHeaderActive;
+      _fileTreeSelectedFile = $v.fileTreeSelectedFile;
       _$v = null;
     }
     return this;
@@ -244,9 +236,7 @@ class ThemePresetBuilder implements Builder<ThemePreset, ThemePresetBuilder> {
 
   @override
   void replace(ThemePreset other) {
-    if (other == null) {
-      throw new ArgumentError.notNull('other');
-    }
+    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$ThemePreset;
   }
 
@@ -259,16 +249,25 @@ class ThemePresetBuilder implements Builder<ThemePreset, ThemePresetBuilder> {
   _$ThemePreset build() {
     final _$result = _$v ??
         new _$ThemePreset._(
-            projectBrowserBackground: projectBrowserBackground,
-            termBackground: termBackground,
-            text: text,
-            textActive: textActive,
-            windowHeader: windowHeader,
-            windowHeaderActive: windowHeaderActive,
-            fileTreeSelectedFile: fileTreeSelectedFile);
+            projectBrowserBackground: BuiltValueNullFieldError.checkNotNull(
+                projectBrowserBackground,
+                'ThemePreset',
+                'projectBrowserBackground'),
+            termBackground: BuiltValueNullFieldError.checkNotNull(
+                termBackground, 'ThemePreset', 'termBackground'),
+            text: BuiltValueNullFieldError.checkNotNull(
+                text, 'ThemePreset', 'text'),
+            textActive: BuiltValueNullFieldError.checkNotNull(
+                textActive, 'ThemePreset', 'textActive'),
+            windowHeader: BuiltValueNullFieldError.checkNotNull(
+                windowHeader, 'ThemePreset', 'windowHeader'),
+            windowHeaderActive: BuiltValueNullFieldError.checkNotNull(
+                windowHeaderActive, 'ThemePreset', 'windowHeaderActive'),
+            fileTreeSelectedFile: BuiltValueNullFieldError.checkNotNull(
+                fileTreeSelectedFile, 'ThemePreset', 'fileTreeSelectedFile'));
     replace(_$result);
     return _$result;
   }
 }
 
-// ignore_for_file: always_put_control_body_on_new_line,always_specify_types,annotate_overrides,avoid_annotating_with_dynamic,avoid_as,avoid_catches_without_on_clauses,avoid_returning_this,lines_longer_than_80_chars,omit_local_variable_types,prefer_expression_function_bodies,sort_constructors_first,test_types_in_equals,unnecessary_const,unnecessary_new
+// ignore_for_file: always_put_control_body_on_new_line,always_specify_types,annotate_overrides,avoid_annotating_with_dynamic,avoid_as,avoid_catches_without_on_clauses,avoid_returning_this,deprecated_member_use_from_same_package,lines_longer_than_80_chars,omit_local_variable_types,prefer_expression_function_bodies,sort_constructors_first,test_types_in_equals,unnecessary_const,unnecessary_new

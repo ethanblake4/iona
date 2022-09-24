@@ -1,29 +1,30 @@
+import 'dart:io';
 import 'dart:isolate';
 
 import 'package:analysis_server/lsp_protocol/protocol_generated.dart';
 import 'package:analysis_server/lsp_protocol/protocol_special.dart';
-import 'package:analysis_server/plugin/protocol/protocol_dart.dart';
+import 'package:analysis_server/src/lsp/client_capabilities.dart';
+import 'package:analysis_server/src/lsp/client_configuration.dart';
 import 'package:analysis_server/src/lsp/handlers/handler_completion.dart';
 import 'package:analysis_server/src/lsp/handlers/handlers.dart';
+import 'package:analysis_server/src/services/pub/pub_api.dart';
+import 'package:analysis_server/src/services/pub/pub_package_service.dart';
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/analysis/session.dart';
-import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/file_system/file_system.dart';
 import 'package:analyzer/file_system/overlay_file_system.dart';
 import 'package:analyzer/file_system/physical_file_system.dart';
-import 'package:analyzer/source/line_info.dart';
-import 'package:analyzer/src/context/builder.dart' as cb;
+import 'package:analyzer/instrumentation/instrumentation.dart';
 import 'package:analyzer/src/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/src/dart/analysis/byte_store.dart';
 import 'package:analyzer/src/dart/analysis/driver.dart';
 import 'package:analyzer/src/dart/analysis/driver_based_analysis_context.dart';
 import 'package:analyzer/src/dart/analysis/file_byte_store.dart' show EvictingFileByteStore;
 import 'package:analyzer/src/services/available_declarations.dart';
-import 'package:iona_flutter/plugin/dart/flutter/ui_editor/parse.dart';
+import 'package:http/http.dart' as http;
 import 'package:iona_flutter/plugin/dart/model/analysis_message.dart';
-import 'package:iona_flutter/plugin/dart/model/flutter_names.dart';
 import 'package:pedantic/pedantic.dart';
 
 void analysisEngine(SendPort sendPort) async {
@@ -79,12 +80,21 @@ class DartAnalysisEngine {
     final completionCapabilities = CompletionClientCapabilities(completionItemKind: cik, completionItem: ci);
     final textCapabilites = TextDocumentClientCapabilities(completion: completionCapabilities);
     capabilities = ClientCapabilities(textDocument: textCapabilites);
+    capabilitesLsp = LspClientCapabilities(capabilities);
 
-    cb.ContextBuilder.onCreateAnalysisDriver = (AnalysisDriver driver, AnalysisDriverScheduler analysisDriverScheduler,
-        performanceLog, resourceProvider, byteStore, fileContentOverlay, path, sf, options) {
+    /*cb.ContextBuilder.onCreateAnalysisDriver = (AnalysisDriver driver,
+        AnalysisDriverScheduler analysisDriverScheduler,
+        performanceLog,
+        resourceProvider,
+        byteStore,
+        fileContentOverlay,
+        path,
+        sf,
+        options) {
       print('oncreateanalysisdriver');
-      analysisDriverScheduler.outOfBandWorker = CompletionLibrariesWorker(declarationsTracker);
-    };
+      analysisDriverScheduler.outOfBandWorker =
+          CompletionLibrariesWorker(declarationsTracker);
+    };*/
   }
 
   factory DartAnalysisEngine() {
@@ -98,23 +108,21 @@ class DartAnalysisEngine {
   String rootFolder;
   CancelableToken completeToken;
   ClientCapabilities capabilities;
+  LspClientCapabilities capabilitesLsp;
+  ServerLikeDataStore store;
 
   Future<AnalysisMessage> handleMessage(AnalysisMessage message) async {
     switch (message.type) {
-      case 'setRootFolder':
+      case AnalysisMessage.setRootFolder:
         print('root: ${message.content}');
         final res = await setRootFolder(message.content);
         return AnalysisMessage('setRootFolder.result', res);
         break;
-      case 'resolvedUnitInfo':
-        final res = await resolvedUnitInfo(message.content as String);
-        return AnalysisMessage('resolvedUnitInfo.result', res);
-        break;
-      case 'complete':
+      case AnalysisMessage.complete:
         final res = await complete(message.content as CompletionParams);
         return AnalysisMessage('complete.result', res);
         break;
-      case 'overlay':
+      case AnalysisMessage.overlay:
         final overlay = message.content as FileOverlay;
         if (!isDartFileName(overlay.path)) return AnalysisMessage('overlay.result', false);
         resourceProvider.setOverlay(overlay.path,
@@ -130,30 +138,53 @@ class DartAnalysisEngine {
     completeToken?.cancel();
     completeToken = CancelableToken();
     try {
-      return await CompletionHandler(null, true).handle(params, completeToken);
+      print(params.textDocument.uri);
+      final anurl = Uri.parse(params.textDocument.uri).path;
+      print(anurl);
+      store.session = collection.contextFor(anurl).currentSession;
+      return await CompletionHandler(null, true).handle2(store, params, completeToken);
       // ignore: avoid_catches_without_on_clauses
+    } on NoSuchMethodError catch (e) {
+      print(e.stackTrace);
+      return ErrorOr.error(
+          ResponseError(code: ErrorCodes.InternalError, message: 'Code completion failed', data: 'complete'));
     } catch (e) {
-      print((e as NoSuchMethodError).stackTrace);
+      print(e);
       return ErrorOr.error(
           ResponseError(code: ErrorCodes.InternalError, message: 'Code completion failed', data: 'complete'));
     }
   }
 
-  Future<int> setRootFolder(String folder) async {
+  Future<int> setRootFolder(SetRootFolderParams params) async {
     declarationsTracker.discardContexts();
     collection = AnalysisContextCollectionImpl(
-        includedPaths: [folder],
+        includedPaths: [params.rootFolder], resourceProvider: resourceProvider, sdkPath: params.sdkPath);
+
+    rootFolder = params.rootFolder;
+    final instrumentationService = MulticastInstrumentationService([]);
+    final pubApi = PubApi(instrumentationService, http.Client(), Platform.environment['PUB_HOSTED_URL']);
+
+    final context = collection.contextFor('${params.rootFolder}/lib/main.dart') as DriverBasedAnalysisContext;
+
+    store = ServerLikeDataStore(
+        capabilities: capabilitesLsp,
+        clientConfiguration: LspClientConfiguration(),
         resourceProvider: resourceProvider,
-        sdkPath: '/Users/ethanelshyeb/fluttersdk/flutter/bin/cache/dart-sdk');
-    rootFolder = folder;
-    final context = collection.contextFor('$folder/lib/main.dart') as DriverBasedAnalysisContext;
-    final result = await context.currentSession.getResolvedUnit('$folder/lib/main.dart');
+        pubPackageService: PubPackageService(instrumentationService, PhysicalResourceProvider.INSTANCE, pubApi),
+        declarationsTracker: declarationsTracker,
+        session: context.currentSession);
 
-    collection.contexts.forEach((element) {
+    final result = await context.currentSession.getResolvedUnit('${params.rootFolder}/lib/main.dart');
+
+    for (var element in collection.contexts) {
       declarationsTracker.addContext(element);
-    });
+    }
 
-    return result.state == ResultState.VALID ? 1 : 0;
+    if (result is ResolvedUnitResult) {
+      return result.state == ResultState.VALID ? 1 : 0;
+    }
+
+    return 0;
   }
 
   ResolvedUnitResult rs;
@@ -161,72 +192,16 @@ class DartAnalysisEngine {
 
   Future<ErrorOr<ResolvedUnitResult>> requireResolvedUnit(String path) async {
     final result = await collection.contextFor(path).currentSession.getResolvedUnit(path);
-    if (result?.state != ResultState.VALID) {
-      return error(ServerErrorCodes.InvalidFilePath, 'Invalid file path', path);
-    }
-    return success(result);
-  }
 
-  Future<FlutterFileInfo> resolvedUnitInfo(String file) async {
-    if (rootFolder == null) return null;
-
-    final ts = DateTime.now().millisecondsSinceEpoch;
-
-    final result = await collection.contextFor(file).currentSession.getResolvedUnit(file);
-
-    final nts = DateTime.now().millisecondsSinceEpoch;
-
-    print('> reanalyze (time=${nts - ts}ms)');
-
-    //final libraryContext =
-    //    (collection.contextFor('$rootFolder/lib/main.dart') as DriverBasedAnalysisContext).driver.getLibraryContext();
-
-    final unit = result.unit;
-    final element = unit.declaredElement;
-    final stful = Map<String, String>();
-    List<FlutterWidgetInfo> widgets = [];
-
-    try {
-      for (final declaration in unit.declarations) {
-        //unit.declarations
-        if (declaration is ClassDeclaration) {
-          final clsDef = element.getType(declaration.name.name);
-          if (clsDef == null) continue;
-          final supertypeEl = findWidgetSupertype(clsDef.supertype);
-          if (supertypeEl == null) continue;
-          final superName = supertypeEl.element.name;
-
-          if (superName == flutterStatefulWidget) {
-            final createState = declaration.members.firstWhere(
-                (element) => element is MethodDeclaration && element.name.name == flutterStatefulCreateState,
-                orElse: () => null);
-            if (createState == null || createState.declaredElement == null) continue;
-
-            stful[createState.childEntities.toList()[1].toString()] = clsDef.name;
-          } else if (superName == flutterState) {
-            FlutterWidgetInfo w = FlutterWidgetInfo();
-
-            w.widgetClass = parseClass(declaration);
-            if (stful.containsKey(clsDef.name)) {
-              w.name = stful[clsDef.name];
-              widgets.add(w);
-            }
-          } else if (superName == flutterStatelessWidget) {
-            FlutterWidgetInfo w = FlutterWidgetInfo();
-            w.widgetClass = parseClass(declaration);
-            w.name = clsDef.name;
-            widgets.add(w);
-          } else {
-            print(superName);
-          }
-        }
+    if (result is ResolvedUnitResult) {
+      if (result.state != ResultState.VALID) {
+        return error(ErrorCodes.InvalidParams, 'Invalid file path', path);
       }
-    } catch (e) {
-      print(e);
 
-      return null;
+      return success(result);
     }
-    return FlutterFileInfo(widgets);
+
+    return error(ErrorCodes.InvalidParams, 'Invalid file path', path);
   }
 
   InterfaceType findWidgetSupertype(InterfaceType type) {
@@ -252,9 +227,9 @@ class DartAnalysisEngine {
   /// Return the LineInfo for the file with the given [path]. The file is
   /// analyzed in one of the analysis drivers to which the file was added,
   /// otherwise in the first driver, otherwise `null` is returned.
-  LineInfo getLineInfo(String path) {
-    return getAnalysisDriver(path)?.getFileSync(path)?.lineInfo;
-  }
+  /*LineInfo getLineInfo(String path) {
+    return getAnalysisDriver(path)?.getFileSync2(path)?.;
+  }*/
 
   AnalysisDriver getAnalysisDriver(String path) {
     return (collection.contextFor(path) as DriverBasedAnalysisContext).driver;

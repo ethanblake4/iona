@@ -1481,7 +1481,6 @@ class DropdownButtonFormField<T> extends FormField<T> {
           onSaved: onSaved,
           initialValue: value,
           validator: validator,
-          autovalidate: autovalidate,
           builder: (FormFieldState<T> field) {
             final _DropdownButtonFormFieldState<T> state = field as _DropdownButtonFormFieldState<T>;
             final InputDecoration decorationArg = decoration ?? InputDecoration(focusColor: focusColor);

@@ -8,16 +8,23 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  pubspec: ^2.0.1
   dartx:
+  codicon: ^0.0.3
   analysis_server_lib:
   built_value:
   built_collection:
-  scoped_model: ^1.0.1
-  event_bus: ^1.1.0
+  scoped_model: ^2.0.0-nullsafety.0
+  event_bus: ^2.0.0
   flutter_screenutil:
+  xterm: ^3.0.0
+  pty: ^0.2.2-pre
+  path: ^1.8.0
+  async: ^2.7.0
+  collection: ^1.15.0
+  platform: ^3.0.0
   pedantic:
   sembast:
-  isolate:
   yaml:
   equatable:
   dart_style:
@@ -25,23 +32,19 @@ dependencies:
   cupertino_icons: ^0.1.0
   analyzer_plugin:
     path: ../sdk/pkg/analyzer_plugin
-
+  analysis_server:
+    path: ../sdk/pkg/analysis_server
   analyzer:
     path: ../sdk/pkg/analyzer
   selection_menu: ^0.9.0
   catex:
 
-  ffi_terminal:
-    path: /Users/ethanelshyeb/ffi_terminal
   devtools_app:
     path: ../devtools/packages/devtools_app
-  analysis_server:
-    path: ../sdk/pkg/analysis_server
   cyclop:
     path: ../cyclop/
   dart_eval:
     path: ../dart_eval/
-
 
   # Desktop embedder plugins.
   # Note: In an actual project, these paths would include the
@@ -49,26 +52,37 @@ dependencies:
   # checkout.
   color_panel:
     path: ../plugins/color_panel
-  file_chooser:
-    path: ../plugins/file_chooser
+  file_selector:
+  file_selector_macos: ^0.0.3
+  file_selector_linux: ^0.0.2
+  file_selector_windows: ^0.0.2
   menubar:
-    path: ../plugins/menubar
+    git:
+      url: git://github.com/google/flutter-desktop-embedding.git
+      path: plugins/menubar
+      ref: 85dde09b702a0cb1f5e1392d2f030bdc3d4e5be3
   window_size:
-    path: ../plugins/window_size
-  path_provider: ^1.6.5
-  path_provider_fde:
-    path: ../plugins/flutter_plugins/path_provider_fde
-  shared_preferences: ^0.5.6
+    git:
+      url: git://github.com/google/flutter-desktop-embedding.git
+      path: plugins/window_size
+      ref: e48abe7c3e9ebfe0b81622167c5201d4e783bb81
+  path_provider: ^2.0.2
+  shared_preferences: ^2.0.6
   url_launcher: ^5.4.0
   url_launcher_fde:
     path: ../plugins/flutter_plugins/url_launcher_fde
+  file: ^6.1.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   build_runner:
+  built_value_generator: ^8.1.1
 
 dependency_overrides:
+  meta:
+  http: ^0.13.0
+  usage: ^4.0.0
   analyzer:
     path: ../sdk/pkg/analyzer
   _fe_analyzer_shared:
@@ -77,11 +91,22 @@ dependency_overrides:
 flutter:
   uses-material-design: true
   assets:
-    - nativeLibs/libvterm.dylib
-    - nativeLibs/libvterm.0.dylib
-    - nativeLibs/libvterm.a
-    - nativeLibs/libvterm.lai
-    - assets/icons/dart.png
+    - assets/
+    - assets/img/
+    - assets/img/layout_explorer/
+    - assets/img/layout_explorer/cross_axis_alignment/
+    - assets/img/layout_explorer/main_axis_alignment/
+    - assets/img/legend/
+    - assets/scripts/inspector_polyfill_script.dart
+    - icons/
+    - icons/actions/
+    - icons/custom/
+    - icons/general/
+    - icons/gutter/
+    - icons/inspector/
+    - icons/memory/
+    - icons/perf/
+    - assets/icons/
 
   fonts:
     - family: Roboto
@@ -136,3 +161,9 @@ flutter:
     - family: Cascadia
       fonts:
         - asset: fonts/Cascadia/CascadiaMono.ttf
+    - family: Octicons
+      fonts:
+        - asset: fonts/Octicons.ttf
+    - family: Codicon
+      fonts:
+        - asset: packages/codicon/font/codicon.ttf
